@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from scipy import optimize
 from scipy import integrate
@@ -73,8 +74,7 @@ def pull_phase(compA,dim=0):
 #jspx/mspx(S) * S - const = 0
 #this constant is current ratio
 
-import os
-saved_f = "/Users/shawn/RJ.npy"
+saved_f = os.environ['HOME'] +  "/RJ.npy"
 ANS_R = np.logspace(-4,-0.0000001,1000)
 if(os.path.exists(saved_f)):
     ANS_RATIO_J = np.load(saved_f)
@@ -119,7 +119,7 @@ def calcWK(wl,wc,wp,kl,phi_w,dT,zpos):
     wsim = dphi_t/dT
 
     #phase unwrap along dim 1; make continueous w.r.t space
-    #k = \partial phi/ \partial s
+    #k = -\partial phi/ \partial s
     #phi_w_s = phi_w[:,:]
     phi_w_s = np.unwrap(phi_w[:,:],axis=1)
     dphi_z = (phi_w_s[:,1:] -  phi_w_s[:,:-1])/1
