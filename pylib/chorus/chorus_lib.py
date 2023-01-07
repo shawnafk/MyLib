@@ -74,7 +74,7 @@ def pull_phase(compA,dim=0):
 #jspx/mspx(S) * S - const = 0
 #this constant is current ratio
 
-saved_f = os.environ['HOME'] +  "/RJ.npy"
+saved_f = "./tmpRJ.npy"
 ANS_R = np.logspace(-4,-0.0000001,1000)
 if(os.path.exists(saved_f)):
     ANS_RATIO_J = np.load(saved_f)
