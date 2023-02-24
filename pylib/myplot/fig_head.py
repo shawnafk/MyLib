@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('prl')
+#plt.style.use('./prl.mplstyle')
 import matplotlib as mpl
 import matplotlib.font_manager as font_manager
 font = font_manager.FontProperties(family='Times New Roman',
