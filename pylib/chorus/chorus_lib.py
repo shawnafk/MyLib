@@ -217,6 +217,13 @@ def fit_gm(B):
     a2=0.76
     return (B/a1)**(1/a2)
 
+def readchor(file,length,dim):
+    chor = np.loadtxt(file)
+    if dim>1:
+        newc = chor.reshape([int(chor.shape[0]/length),length,dim])
+    else:
+        newc = chor.reshape([int(chor.shape[0]/length),length])
+    return newc
 
 ## calculate basic data on a magnetic field line of Earth's dipole field.
 def zpos():

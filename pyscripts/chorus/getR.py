@@ -1,8 +1,9 @@
 import sys
 import numpy as np
 from scipy import optimize
-import chorus_lib as cl
-exec(open('/Users/shawn/py_chorus/loadall.py').read())
+from chorus import chorus_lib as cl
+chor=np.load("chor.npy")
+sour=np.load("sour.npy")
 compchor= chor[...,0] + chor[...,1]*1j
 compsour= sour[...,0] + sour[...,1]*1j
 phase_chor = np.angle(compchor)

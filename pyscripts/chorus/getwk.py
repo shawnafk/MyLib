@@ -8,7 +8,6 @@ exec(open('/Users/shawn/py_chorus/loadall.py').read())
 
 compchor= chor[...,0] + chor[...,1]*1j
 phase_chor = np.angle(compchor)
-phi_w =(np.unwrap(phase_chor,axis=1))
 wall,klin,knl,kall = cl.calcWK(wl,gyro,np.sqrt(wp2),kmode,phase_chor,dT,zpos)
 
 fsp='./data/'
