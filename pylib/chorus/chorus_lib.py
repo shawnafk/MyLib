@@ -74,15 +74,15 @@ def pull_phase(compA,dim=0):
 #jspx/mspx(S) * S - const = 0
 #this constant is current ratio
 
-saved_f = "./tmpRJ.npy"
-ANS_R = np.logspace(-4,-0.0000001,1000)
-if(os.path.exists(saved_f)):
-    ANS_RATIO_J = np.load(saved_f)
-else:
-    ANS_RATIO_J = np.array([ratioJ_w(r) for r in ANS_R])
-    np.save(saved_f,ANS_RATIO_J)
-from scipy import interpolate
-calcR_interp = interpolate.interp1d(abs(ANS_RATIO_J), ANS_R)
+#saved_f = "./tmpRJ.npy"
+#ANS_R = np.logspace(-4,-0.0000001,1000)
+#if(os.path.exists(saved_f)):
+#    ANS_RATIO_J = np.load(saved_f)
+#else:
+#    ANS_RATIO_J = np.array([ratioJ_w(r) for r in ANS_R])
+#    np.save(saved_f,ANS_RATIO_J)
+#from scipy import interpolate
+#calcR_interp = interpolate.interp1d(abs(ANS_RATIO_J), ANS_R)
 
 def calcR_w(ratio):
     sol = []
