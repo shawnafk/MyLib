@@ -16,33 +16,87 @@ def gen_k(DX,N):
 	return k
 #maybe high dimensional
 
-#fig and ax, data, dt,dim, and animation args
-def cartoon(array,Vmin,Vmax,dt=0.5,flag='1d',*args,**kwargs):
+def cartoon1d_low(x,yt_s,Vmin=0,Vmax=0,dt=1,units='s',*args,**kwargs):
 	fig=plt.figure()
 	ax=plt.axes()
 	time = ax.annotate(0,xy=(0, 0),xycoords='figure fraction')
-	if '1d' == flag:
-		ax.set_ylim(Vmin,Vmax)
-		#draw first
-		line = []
-		line = ax.plot( array[:, 0], color='k', lw=2)[0]
-		def animate(i):
-			line.set_ydata(array[:,i])
-			time.set_text('Frames = %d,time = %0.2f ns' %(i,i*dt))
-			#using function pointer
-	elif '2d' == flag:
-		#draw first
-#		cax = ax.pcolormesh(array[:-1, :-1, 0], vmin=-1, vmax=1, cmap='jet')
-		#cax = ax.pcolormesh(array[:, :, 0], cmap='jet ',shading='gouraud')
-		#cax = ax.pcolormesh(array[:, :, 0],vmin=-Vrange,vmax=Vrange, shading='gouraud')
-		im = plt.imshow(array[:, :, 0],vmin=Vmin,vmax=Vmax )
-		fig.colorbar(im)
-		def animate(i):
-			#im.set_array(array[:,:,i].flatten())
-			im.set_array(array[:,:,i])
-			time.set_text('Frames = %d,time = %0.2f ns' %(i,i*dt))
-	else:
-		return 1
+	enter=0
+	#draw first
+	def animate(i):
+		#if set ylim	
+		if (Vmin!=Vmax and enter==0):
+			enter=1
+			ax.set_ylim(Vmin,Vmax)
+		ax.clear()
+		text='Frames = '+str(i) + 'Time =' +str( round(i*dt,2)) + units
+		for yt in yt_s:
+			ax.plot(x,yt[:,i])
+		ax.annotate(text, xy=(0.85, 0.95), xycoords='axes fraction')
+	anim = animation.FuncAnimation(fig, animate, *args,**kwargs)
+	return anim
+
+def cartoon1d_fixed(x,yt_s,Vmin,Vmax,*args,**kwargs):
+    fig=plt.figure()
+    ax=plt.axes()
+    time = ax.annotate(0,xy=(0.2, 0.9),xycoords='figure fraction')
+    #draw first
+    lines = []
+    lt=0
+    for yt in yt_s:
+        lines.append(ax.plot(x, yt[:, 0],lw=2)[0])
+        lt=lt+1
+    def animate(i):
+        text='Frames = '+str(i)
+        time.set_text(text)
+        l_th = 0
+        for yt in yt_s:
+            lines[l_th].set_ydata(yt[:,i])
+            l_th=l_th+1
+        ax.set_ylim(Vmin,Vmax)
+    anim = animation.FuncAnimation(fig, animate, *args,**kwargs)
+    return anim
+
+def cartoon1d_dyn(x,yt_s,*args,**kwargs):
+    fig=plt.figure()
+    ax=plt.axes()
+    time = ax.annotate(0,xy=(0.2, 0.9),xycoords='figure fraction')
+    #draw first
+    lines = []
+    lt=0
+    for yt in yt_s:
+        lines.append(ax.plot(x, yt[:, 0],lw=2)[0])
+        lt=lt+1
+    def animate(i):
+        text='Frames = '+str(i)
+        time.set_text(text)
+        l_th = 0
+        y_min=[]
+        y_max=[]
+        for yt in yt_s:
+            y_min.append(np.min(yt[:,i]))
+            y_max.append(np.max(yt[:,i]))
+        ymin,ymax=np.min(y_min),np.max(y_max)
+        yrange = ymax - ymin
+        ypadding = yrange * 0.1 # add 10% padding to the range
+        for yt in yt_s:
+            lines[l_th].set_ydata(yt[:,i])
+            l_th=l_th+1
+        ax.set_ylim(ymin - ypadding, ymax + ypadding)
+    anim = animation.FuncAnimation(fig, animate, *args,**kwargs)
+    return anim
+
+def cartoon2d_dyn(xyextent,array,*args,**kwargs):
+	fig=plt.figure()
+	ax=plt.axes()
+	time = ax.annotate(0,xy=(0.2, 0.9),xycoords='figure fraction')
+	im = ax.imshow(array[...,0],aspect='auto',extent=xyextent,cmap='jet',interpolation='lanczos')
+	cbar = fig.colorbar(im)
+	def animate(i):
+		Z=array[:,:,i]
+		im.set_array(Z)
+		im_min, im_max = np.min(Z), np.max(Z)
+		im.set_clim(im_min, im_max)
+		time.set_text('Frames = %d' %i)
 	anim = animation.FuncAnimation(fig, animate, *args,**kwargs)
 	return anim
 

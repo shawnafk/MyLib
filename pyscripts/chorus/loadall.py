@@ -1,6 +1,6 @@
 import numpy as np
 #input parameter
-case=1
+case=2
 if case == 1: 
     #half
     dT = 89.714891963013827
