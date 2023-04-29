@@ -33,7 +33,7 @@ def find_zeta(S):
         zeta_o=allzeta[0]
         zeta_o = np.array(zeta_o).flatten()[-1]
         zeta_x = np.array(zeta_x).flatten()[-1]
-    return np.array((zeta_o,zeta_x))
+    return zeta_o,zeta_x
 
 ##omura
 def resonant_J(S):
@@ -74,15 +74,13 @@ def pull_phase(compA,dim=0):
 #jspx/mspx(S) * S - const = 0
 #this constant is current ratio
 
-#saved_f = "./tmpRJ.npy"
-#ANS_R = np.logspace(-4,-0.0000001,1000)
-#if(os.path.exists(saved_f)):
-#    ANS_RATIO_J = np.load(saved_f)
-#else:
-#    ANS_RATIO_J = np.array([ratioJ_w(r) for r in ANS_R])
-#    np.save(saved_f,ANS_RATIO_J)
-#from scipy import interpolate
-#calcR_interp = interpolate.interp1d(abs(ANS_RATIO_J), ANS_R)
+#return function: take ratio give R
+def init_R_ratio():
+	ANS_R = np.logspace(-4,-0.0000001,1000)
+	ANS_RATIO_J = np.array([ratioJ_w(r) for r in ANS_R])
+	from scipy import interpolate
+	calcR_interp = interpolate.interp1d(abs(ANS_RATIO_J), ANS_R)
+	return calcR_interp
 
 def calcR_w(ratio):
     sol = []
@@ -217,12 +215,13 @@ def fit_gm(B):
     a2=0.76
     return (B/a1)**(1/a2)
 
-def readchor(file,length,dim):
+def readchor(file,length,dim=2):
     chor = np.loadtxt(file)
     if dim>1:
-        newc = chor.reshape([int(chor.shape[0]/length),length,dim])
+        intlen = int(chor.shape[0]/length)
+        newc = chor[:intlen*length,...].reshape([intlen,length,dim])
     else:
-        newc = chor.reshape([int(chor.shape[0]/length),length])
+        newc = chor[:intlen*length,...].reshape([intlen,length])
     return newc
 
 ## calculate basic data on a magnetic field line of Earth's dipole field.
