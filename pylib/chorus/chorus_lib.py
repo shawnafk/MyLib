@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 
 #define potential
 def potential(wtr,S,zeta):
-    return 2* wtr**2 * (np.cos(zeta) - S *  zeta)
+    return 2* wtr**2 * (np.cos(zeta) + S *  zeta)
 
 #find zeta is O point or X point
+#energy O is greater then X
 def min_potential_zeta(wtr,S,zeta1,zeta2):
     if(potential(wtr,S,zeta1) > potential(wtr,S,zeta2)):
         return zeta2
@@ -17,13 +18,13 @@ def min_potential_zeta(wtr,S,zeta1,zeta2):
         return zeta1
 
 #take wtr S and return (zeta0,zeta1,zeta2) : lowest potential point, X point, and O point
-def find_zeta(S):
+def find_zeta(S,wtr=1):
     #wtr can be any value
-    wtr=1
-    zeta_x=np.mod(-np.arcsin(S),2*np.pi)
+	#X point, energy first order derivate = 0; - sin z + S  = 0 
+    zeta_x=np.mod(np.arcsin(S),2*np.pi)
     const_E = potential(wtr,S,zeta_x) 
     #use chebfun function to find the other intersection (zeta_o) of "E=const_E" line and "E = potential" curve
-    sol=chebfun(lambda zeta:2*wtr**2*(np.cos(zeta) - S*zeta)-(const_E),[0,2*np.pi])
+    sol=chebfun(lambda zeta:2*wtr**2*(np.cos(zeta) + S*zeta)-(const_E),[0,2*np.pi])
     allzeta = sol.roots()
     #allzeta result may contains both zeta_o and zeta_x, choose the one with largest distance to our known zeta_x as zeta_o 
     if (len(allzeta)!=1):
@@ -40,9 +41,9 @@ def resonant_J(S):
     zeta_o,zeta_x = find_zeta(S)
     #zeta_1 is the X point
     def currentB(zeta,zeta1,S):
-        return (np.cos(zeta1) - np.cos(zeta) + S*(zeta - zeta1))**0.5 * np.cos(zeta)
+        return (np.cos(zeta1) - np.cos(zeta) - S*(zeta - zeta1))**0.5 * np.cos(zeta)
     def currentE(zeta,zeta1,S):
-        return (np.cos(zeta1) - np.cos(zeta) + S*(zeta - zeta1))**0.5 * np.sin(zeta)
+        return (np.cos(zeta1) - np.cos(zeta) - S*(zeta - zeta1))**0.5 * np.sin(zeta)
     JE=-integrate.quad(currentE,zeta_x,zeta_o,args=(zeta_x,S))[0]
     JB=integrate.quad(currentB,zeta_x,zeta_o,args=(zeta_x,S))[0]
     return JE,JB
@@ -51,9 +52,9 @@ def MJ_spx(S):
     zeta_o,zeta_x = find_zeta(S)
     #zeta_1 is the X point
     def Mspx(zeta,zeta1,S):
-        return (np.cos(zeta1) - S*zeta1 - (np.cos(zeta) - S*zeta) )**0.5 * np.cos(zeta)
+        return (np.cos(zeta1) + S*zeta1 - (np.cos(zeta) + S*zeta) )**0.5 * np.cos(zeta)
     def Jspx(zeta,zeta1,S):
-        return (np.cos(zeta1) - S*zeta1 - (np.cos(zeta) - S*zeta) )**0.5
+        return (np.cos(zeta1) + S*zeta1 - (np.cos(zeta) + S*zeta) )**0.5
     mspx=integrate.quad(Mspx,zeta_x,zeta_o,args=(zeta_x,S))[0]
     jspx=integrate.quad(Jspx,zeta_x,zeta_o,args=(zeta_x,S))[0]
     return jspx,mspx 
@@ -106,32 +107,84 @@ def calcR_o(ratio):
         sol.append(_sol.x[0])
     return np.array(sol)
 
+#20230501
+#calculate alpha by definition
+def f_Jact(omega,gyro,kmode,gyro0,vperp,kmode0):
+    pcr0 = (omega - gyro0)/kmode0**2
+    Jact0 = vperp*vperp/gyro0 - pcr0
+    const=(omega-gyro0)*Jact0+0.5*(omega-gyro0)**2/kmode0**2
+    return (const-0.5*(omega-gyro)**2/kmode**2)/(omega-gyro)
 
-def calcWK(wl,wc,wp,kl,phi_w,dT,zpos):
+def f_wb2(gyro,J,a,freq,k):
+    #mu=J+Omega+PI = J+ p_para/k
+    mu = J + (freq - gyro)/k/k
+    vperp = np.sqrt(2*gyro*mu)
+    wtr2= vperp * k**2 * a
+    return wtr2
+
+#J is a time constant
+
+#linear dispersion + k by dispersion
+def f_alpha_t(freq,freq_t,gyro,gyro_s,wb2,k,vr,vg,J):
+    mu = J + (freq - gyro)/k/k
+	#linear vg and vr
+    alp = 1/wb2*(1-vr/vg)**2 * freq_t + (k*mu - 3*vr/2)/wb2 * gyro_s
+    return alp
+#nonlinear dispersion + k by dis
+    #nonlinear
+def f_alpha_w(freq_t,gyro_s,wb2,k,kl,J,PI):
+    #nonlinear dp: vg = - vr
+    alp = 4/wb2 * freq_t + (J + (kl/2/k - 1)*PI)*k/wb2 * gyro_s
+    return alp
+#all by defination
+def f_alpha(freq_t,gyro_s,wb2,k,k_s,vr,vg,J):
+	# vg and vr imsimulation
+    alp = 1/wb2 *(1-2*vr/vg) * freq_t + vr**2*k_s *(J)*k/wb2 * gyro_s
+    return alp
+
+#chirping rate at source
+def c_rate_s(freq,gyro,gyro_s,k,vr,vg,J):
+    mu = J + (freq - gyro)/k/k
+    c_rate = (1-vr/vg)**-2 * (k*mu - 3*vr/2) * gyro_s
+    return c_rate
+
+def calcWK(wl,wc,wp2,kl,phi_w,dT,zpos):
     #phase unwrap along dim 0; make continueous w.r.t time
     #omega = \partial phi/ \partial t
     phi_w_t = np.unwrap(phi_w[:,:],axis=0)
 
     #phi_w_t = phi_w[:,:]
-    dphi_t = (phi_w_t[1:,:] -  phi_w_t[:-1,:])
+    dphi_t = np.gradient(phi_w_t,axis=0)
     wsim = dphi_t/dT
 
     #phase unwrap along dim 1; make continueous w.r.t space
     #k = -\partial phi/ \partial s
     #phi_w_s = phi_w[:,:]
     phi_w_s = np.unwrap(phi_w[:,:],axis=1)
-    dphi_z = (phi_w_s[:,1:] -  phi_w_s[:,:-1])/1
-    dz = (zpos[np.newaxis,1:] - zpos[np.newaxis,:-1])
-    ksim=-(dphi_z[:,:-1]/dz)
+    #dphi_z = (phi_w_s[:,1:] -  phi_w_s[:,:-1])/1
+    dphi_z = np.gradient(phi_w_s,axis=1)
+    dz = np.gradient(zpos)
+    ksim=-(dphi_z/dz)
 
     wall=wsim+wl
-    klin = np.sqrt(wall[:,:-1]**2+wp**2*wall[:,:-1]/(wc-wall[:,:-1]))
+    #klin = np.sqrt(wall[:,:-1]**2+wp2*wall[:,:-1]/(wc-wall[:,:-1]))
+    klin = np.sqrt(wall**2+wp2*wall/(wc-wall))
 
     #kl2 = kmode, gap comes from freq
     #left aligned
-    knl = (wc-wl)/(wc - wall[:,:-1])*kl[np.newaxis,:]
-    kall = kl[:-1]+ ksim[:-1,:]
-    return wall,klin,knl,kall
+    #knl = (wc-wl)/(wc - wall[:,:-1])*kl[np.newaxis,:]
+    #kall = kl[:-1]+ ksim[:-1,:]
+    knl = (wc-wl)/(wc - wall)*kl[np.newaxis,:]
+    kall = kl+ ksim
+   
+
+    dfdt = np.gradient(wall,axis=0)/dT
+    dfdz= np.gradient(wall,axis=1)/dz
+    vgconsw =-dfdt/dfdz
+    #vg0t = 2*kall/(2*wall[:,1:-1] + wc[:-1]*wp2[:-1]/(wc[:-1]-wall[:,1:-1])**2)
+    vg0t = 2*kall/(2*wall + wc*wp2/(wc-wall)**2)
+    vrt = (wall - wc) /kall
+    return wall,klin,knl,kall,vgconsw,vg0t,vrt
 
 def calc_ko(wall,wc,wp,gm):
     R = gm/wall
@@ -140,15 +193,6 @@ def calc_ko(wall,wc,wp,gm):
 
     return ko_p,ko_m
 
-
-def calcVG(wce,wp2,wall,ksim,zpos,dT):
-    dz=zpos[1:] - zpos[:-1]
-    dfdz=(wall[:,1:-1] - wall[:,:-2])/dz[np.newaxis,:]
-    dfdt=(wall[1:,:] - wall[:-1,:])/dT
-    vgsim =-dfdt[:,:-2]/dfdz[1:,:]
-    vg0sim = 2*ksim/(2*wall[:,:-2] + wce[:-1]*wp2[:-1]/(wce[:-1]-wall[:,:-2])**2)
-    vrsim = (wall[:,1:-1] - wce[:-1]) /ksim
-    return vg0sim,vrsim,vgsim
 
 def calcAdv(amp,zpos,vg,dT):
     da_t = amp[1:,:] -  amp[:-1,:]
@@ -205,6 +249,7 @@ def OMG_Tr(w,wpe,wce,v_perp,B1,delta,lorentz_f):
 #our way to calculate trapping frequency
 #J is a constant load from file, O is approximate 0, Pcr is constant
 #in unit wpe only
+#wrong not from linear
 def OMG_Tr2(wl,wpe,wce,Jact,a):
     kl=linear_k(wl,wpe,wce)
     pcr= (wl - wce)/kl/kl
@@ -225,13 +270,15 @@ def readchor(file,length,dim=2):
     return newc
 
 ## calculate basic data on a magnetic field line of Earth's dipole field.
+'''
 def zpos():
+
     return 0
 def wce(zpos):
     return 0
 def wpe(zpos):
     return 0
-
+'''
 #def ord2(zpos,z0,dkdt,vr,vg):
 #    return 0.5*(-1/vr-1/vg)*dkdt*(zpos-z0)**2
 #exp2nd = ord2(zpos,zpos[512],dkdt[:,:],vr,vg)
