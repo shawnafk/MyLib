@@ -25,8 +25,15 @@ def find_zeta(S,wtr=1):
     const_E = potential(wtr,S,zeta_x) 
     #use chebfun function to find the other intersection (zeta_o) of "E=const_E" line and "E = potential" curve
     sol=chebfun(lambda zeta:2*wtr**2*(np.cos(zeta) + S*zeta)-(const_E),[0,2*np.pi])
-    allzeta = sol.roots()
-    #allzeta result may contains both zeta_o and zeta_x, choose the one with largest distance to our known zeta_x as zeta_o 
+    #allzeta result may contains both zeta_o and zeta_x, choose the one with largest distance to our known zeta_x as zeta_o
+    allzeta = []
+    #filter nan
+    for r in sol.roots():
+        if np.isnan(r):
+            continue
+        else:
+            allzeta.append(r)
+    print(allzeta)
     if (len(allzeta)!=1):
         d2zeta_x = np.abs(allzeta - zeta_x)
         zeta_o = allzeta[np.where(d2zeta_x==np.max(d2zeta_x))][-1]

@@ -1,6 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('prl')
+import os
+plt.style.use('/Users/shawn/Nextcloud/MyLib/pylib/myplot/prl.mplstyle')
+shadeopts = {'cmap': 'jet', 'shading': 'gouraud',"rasterized":True}
+#for p in os.environ.get('PYTHONPATH').split(':'):
+#	fname=p+'./prl.mplstyle'
+#	if os.path.exists(fname):
+#		plt.style.use(fname)
+#		break
 import matplotlib as mpl
 import matplotlib.font_manager as font_manager
 font = font_manager.FontProperties(family='Times New Roman',

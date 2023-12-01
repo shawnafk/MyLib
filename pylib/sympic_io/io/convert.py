@@ -65,4 +65,89 @@ def py2vtks(dat,name,ext):
      sg.point_data.scalars.name = name
      write_data(sg, name+ext)
 
+import vtk
+import numpy as np
+
+def py2vtkv(dat, name, ext):
+    nx, ny, nz = dat.shape
+    
+    # Generate the grid points
+    xx, yy, zz = np.mgrid[0:nx, 0:ny, 0:nz]
+    pts = vtk.vtkPoints()
+    pts.SetNumberOfPoints(nx * ny * nz)
+    
+    # Assign the coordinates to the points
+    idx = 0
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                pts.SetPoint(idx, xx[i, j, k], yy[i, j, k], zz[i, j, k])
+                idx += 1
+    
+    # Create a structured grid
+    sg = vtk.vtkStructuredGrid()
+    sg.SetDimensions(nx, ny, nz)
+    sg.SetPoints(pts)
+    
+    # Create a vector data array
+    vectors = vtk.vtkDoubleArray()
+    vectors.SetNumberOfComponents(3)
+    vectors.SetName(name)
+    
+    # Assign the vector data
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                idx = i * ny * nz + j * nz + k
+                vectors.InsertNextTuple3(dat[i, j, k, 0], dat[i, j, k, 1], dat[i, j, k, 2])
+    
+    sg.GetPointData().SetVectors(vectors)
+    
+    # Write the structured grid to a VTK file
+    writer = vtk.vtkXMLStructuredGridWriter()
+    writer.SetFileName(name + ext)
+    writer.SetInputData(sg)
+    writer.Write()
+
+
+def py2vtks(dat, name, ext):
+    nx, ny, nz = dat.shape
+    
+    # Generate the grid points
+    xx, yy, zz = np.mgrid[0:nx, 0:ny, 0:nz]
+    pts = vtk.vtkPoints()
+    pts.SetNumberOfPoints(nx * ny * nz)
+    
+    # Assign the coordinates to the points
+    idx = 0
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                pts.SetPoint(idx, xx[i, j, k], yy[i, j, k], zz[i, j, k])
+                idx += 1
+    
+    # Create a structured grid
+    sg = vtk.vtkStructuredGrid()
+    sg.SetDimensions(nx, ny, nz)
+    sg.SetPoints(pts)
+    
+    # Create a scalar data array
+    scalars = vtk.vtkDoubleArray()
+    scalars.SetNumberOfComponents(1)
+    scalars.SetName(name)
+    
+    # Assign the scalar data
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                idx = i * ny * nz + j * nz + k
+                scalars.InsertNextTuple1(dat[i, j, k])
+    
+    sg.GetPointData().SetScalars(scalars)
+    
+    # Write the structured grid to a VTK file
+    writer = vtk.vtkXMLStructuredGridWriter()
+    writer.SetFileName(name + ext)
+    writer.SetInputData(sg)
+    writer.Write()
 

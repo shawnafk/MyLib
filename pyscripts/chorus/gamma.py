@@ -1,7 +1,8 @@
 from sympy import symbols,diff,pi,lambdify,sqrt,exp
 import numpy as np
 from scipy.optimize import fsolve
-
+import matplotlib.pyplot as plt
+#all frequency normalized to wpe
 def funcG(a,b,c,d):
     wl,wce0,vpar,vper,nh,beta = symbols('wl,wce0,vpar,vper,nh,beta')
     kl = sqrt(wl**2 + wl/(wce0 - wl))
@@ -14,10 +15,12 @@ def funcG(a,b,c,d):
     fddgamma = lambdify([wl,wce0],ddgamma.subs({vpar:a,vper:b,nh:c,beta:d}))
     return fgamma,fdgamma,fddgamma
 
-fgamma,fdgamma,fddgamma = funcG(0.15,0.3,0.002,0.3)
+fgamma,fdgamma,fddgamma = funcG(0.2,0.3,0.002,0.)
 from scipy.optimize import root
 N=100
-fwce0=np.linspace(0.2,0.6,N)    
+
+fwce0=np.linspace(0.1,0.6,N)    
+
 fomega=np.zeros(N)
 def solv_w(f,jac,oce,ig):
     g = lambda x: f(x, oce)
@@ -26,7 +29,7 @@ def solv_w(f,jac,oce,ig):
     return sol.x
  
 i=0
-ig=0.05
+ig=0.3
 for gyro0 in fwce0:
     fomega[i] = solv_w(fdgamma,fddgamma,gyro0,ig)
     ig=[fomega[i]]
@@ -37,3 +40,10 @@ wce = np.linspace(0.1,0.6,1000)
 wl = np.linspace(0.01,0.4,800)
 wce_r,wl_c = np.meshgrid(wce,wl)
 G = fgamma(wl_c,wce_r)
+
+fce_eq=0.2
+G = fgamma(wl,fce_eq)
+i=0
+ig=0.06
+f_m = solv_w(fdgamma,fddgamma,fce_eq,ig)
+plt.imshow(G,extent=[wce[0],wce[-1],wl[0],wl[-1]])

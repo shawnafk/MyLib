@@ -6,9 +6,9 @@
 axes.prop_cycle : cycler('color', ['0C5DA5', '00B945', 'FF9500', 'FF2C00', '845B97', '474747', '9e9e9e'])
 
 # Set default figure size
-figure.figsize : 3.375, 2.53125
-font.size: 7
-axes.labelsize:9
+#this all text font: axis label. legend, text, ticks
+font.size: 10
+axes.labelsize:14
 axes.labelpad: 4.5
 # Set x axis
 xtick.direction : in
@@ -18,7 +18,6 @@ xtick.minor.size : 1.5
 xtick.minor.width : 0.5
 xtick.minor.visible : True
 xtick.top : True
-
 # Set y axis
 ytick.direction : in
 ytick.major.size : 3
@@ -31,7 +30,7 @@ ytick.right : True
 # Set line widths
 axes.linewidth : 0.5
 grid.linewidth : 0.5
-lines.linewidth : 0.5
+lines.linewidth : 1
 
 # Remove legend frame
 legend.frameon : False
@@ -47,4 +46,4 @@ mathtext.fontset : dejavuserif
 
 # Use LaTeX for math formatting
 text.usetex : True
-text.latex.preamble : \usepackage{amsmath} \usepackage{amssymb}
+text.latex.preamble : \usepackage{amsmath} \usepackage{amssymb}  \usepackage{amsfonts}

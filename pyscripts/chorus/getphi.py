@@ -21,8 +21,8 @@ np.save(fsp+"out_phi_w.npy",phi_w)
 np.save(fsp+"out_phi_h.npy",phi_h)
 
 #space start from right
-#phi_w =np.unwrap(phi_w[:,::-1],axis=1)
-#phi_h =np.unwrap(phi_h[:,::-1],axis=1)
+phi_w =np.unwrap(phi_w[:,::-1],axis=1)
+phi_h =np.unwrap(phi_h[:,::-1],axis=1)
 #start from left at a given point
 #lstart=350
 #phi_w =np.unwrap(phi_w[:,lstart:],axis=1)
