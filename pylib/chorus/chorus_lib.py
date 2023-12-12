@@ -33,7 +33,7 @@ def find_zeta(S,wtr=1):
             continue
         else:
             allzeta.append(r)
-    print(allzeta)
+    allzeta = np.array(allzeta)
     if (len(allzeta)!=1):
         d2zeta_x = np.abs(allzeta - zeta_x)
         zeta_o = allzeta[np.where(d2zeta_x==np.max(d2zeta_x))][-1]
@@ -214,8 +214,9 @@ def Lshell(xi,a0=4.5,B0=0.312,RE=6378e3):
     omega_ce_surf = 1.76e7*B0
     return 1/(a0/(xi*c**-2*omega_ce_surf**2*RE**2))**(1/4)
 
-def cvg(w,k,wce,wpe):
+def cvg(w,wce,wpe):
     c=1
+    k=np.sqrt(w**2+w*wpe**2/(wce-w))/c
     vg = 2*c**2*k/(2*w + wce*wpe**2/(wce-w)**2)
     return vg
 
@@ -289,3 +290,58 @@ def wpe(zpos):
 #def ord2(zpos,z0,dkdt,vr,vg):
 #    return 0.5*(-1/vr-1/vg)*dkdt*(zpos-z0)**2
 #exp2nd = ord2(zpos,zpos[512],dkdt[:,:],vr,vg)
+
+
+#equilibrium function
+#  subroutine set_feq(eon, chorus)
+#    ! energetic electron equilibrium distribution for one macro-particle
+#    implicit none
+#    type(energetic_eon), intent(inout) :: eon
+#    type(chorus_mode), intent(in) :: chorus
+#    real(fp) :: mu, Jdist1, Jdist2
+#    integer :: j
+#    do j = 0, Np
+#       mu = max(eon%Jpos+chorus%pcr+eon%pcor(j), small)
+#       Jdist1 = exp(-mu*gyro0/(vperp*vperp))  
+#       Jdist2 = exp(-mu*gyro0/(loss_cone*vperp*vperp))
+#       eon%feq(j) = gyro0/((2.0_fp*pi)**1.5_fp*vperp*vperp*vll)/(1.0_fp-loss_cone)        &
+#                  * exp(-0.5_fp*(chorus%kmode*(eon%pcor(j)+chorus%pcr)/vll)**2)           &
+#                  * exp(-mu*(chorus%gyro-gyro0)/(vll*vll))*(Jdist1-Jdist2)
+#       eon%dfeq(j) = -eon%feq(j)*((chorus%kmode**2*eon%pcor(j)+chorus%omega-gyro0)        &
+#                   / (vll*vll)+gyro0/(loss_cone*vperp*vperp)                              &
+#                   * (loss_cone*Jdist1-Jdist2)/(Jdist1-Jdist2)) 
+#    end do
+#    ! delta f 
+#    eon%feon = 0.0_fp
+#    return
+#  end subroutine set_feq
+
+
+
+#verify consistency
+#def get_feq(vperp,vpara,gyro0,gyro,omega,kl,Jact,Omega,loss_cone=1e-16):
+#    small=1e-10
+#    PI=(omega-gyro)/kl/kl
+#    mu = Jact+PI+Omega
+#    mu[mu<0] = small
+#    feq = gyro0/((2.0*np.pi)**1.5*vperp*vperp*vpara) *np.exp(-mu*gyro0/vperp**2)*np.exp(-mu*(gyro-gyro0)/vpara**2)*np.exp(-0.5*(kl*(PI+Omega)/vpara)**2)
+#    dfeq =feq * (-gyro0/vperp**2 - (gyro-gyro0)/vpara**2 - kl**2*(PI+Omega)/vpara**2)
+#    Jdist1 = np.exp(-mu*gyro0/(vperp*vperp)) 
+#    Jdist2 = np.exp(-mu*gyro0/(loss_cone*vperp*vperp))
+#    feq1= gyro0/((2.0*np.pi)**1.5*vperp*vperp*vpara)/(1.0-loss_cone) * np.exp(-0.5*(kl*(Omega+PI)/vpara)**2) * np.exp(-mu*(gyro-gyro0)/(vpara*vpara))*(Jdist1-Jdist2) 
+#    dfeq1 = - feq1*((kl**2*Omega+omega-gyro0) / (vpara*vpara)+gyro0/(loss_cone*vperp*vperp)*(loss_cone*Jdist1-Jdist2)/(Jdist1-Jdist2)) 
+#    Jdist2 = 0.0
+#    feq2 = gyro0/((2*np.pi)**1.5*vperp*vperp*vpara)* np.exp(-0.5*(kl*(Omega+PI)/vpara)**2)*np.exp(-mu*(gyro-gyro0)/(vpara*vpara))*(Jdist1-Jdist2)
+#    dfeq2 = -feq2 *((kl**2*Omega+omega-gyro0)/(vpara*vpara)+gyro0/(vperp*vperp))
+#    return (feq,dfeq),(feq1,dfeq1),(feq2,dfeq2)
+
+
+
+def get_feq(vperp,vpara,gyro0,gyro,omega,kl,Jact,Omega,loss_cone=1e-16):
+    small=1e-10
+    PI=(omega-gyro)/kl/kl
+    mu = Jact+PI+Omega
+    mu[mu<0] = small
+    feq = gyro0/((2.0*np.pi)**1.5*vperp*vperp*vpara) *np.exp(-mu*gyro0/vperp**2)*np.exp(-mu*(gyro-gyro0)/vpara**2)*np.exp(-0.5*(kl*(PI+Omega)/vpara)**2)
+    dfeq =feq * (-gyro0/vperp**2 - (gyro-gyro0)/vpara**2 - kl**2*(PI+Omega)/vpara**2)
+    return (feq,dfeq)
