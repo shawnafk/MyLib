@@ -39,10 +39,12 @@ legend.handlelength: 2
 savefig.bbox : tight
 savefig.pad_inches : 0.05
 
+#cause mathcal bug
 # Use serif fonts
-font.serif : Times
+font.serif : 'Times New Roman'
+#font.serif : Times
 font.family : serif
-mathtext.fontset : dejavuserif
+#mathtext.fontset : dejavuserif
 
 # Use LaTeX for math formatting
 text.usetex : True

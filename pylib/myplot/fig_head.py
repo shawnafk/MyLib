@@ -1,8 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-plt.style.use('/Users/shawn/Nextcloud/MyLib/pylib/myplot/prl.mplstyle')
+plt.style.use('/Users/shawn/MyLib/pylib/myplot/prl.mplstyle')
 shadeopts = {'cmap': 'jet', 'shading': 'gouraud',"rasterized":True}
+fig_w=3.375/1.1*2
+fsp='./'
+scale=1.5
 #for p in os.environ.get('PYTHONPATH').split(':'):
 #	fname=p+'./prl.mplstyle'
 #	if os.path.exists(fname):
@@ -10,9 +13,7 @@ shadeopts = {'cmap': 'jet', 'shading': 'gouraud',"rasterized":True}
 #		break
 import matplotlib as mpl
 import matplotlib.font_manager as font_manager
-font = font_manager.FontProperties(family='Times New Roman',
-                                   weight='bold',
-                                   style='normal')
+#font = font_manager.FontProperties(family='Times New Roman', weight='bold', style='normal')
 import matplotlib.ticker as ticker
 from matplotlib.pyplot import MultipleLocator
 axlbfs=10
@@ -134,3 +135,9 @@ class MyAxes3D(axes3d.Axes3D):
 
         # disable draw grid
         zaxis.axes._draw_grid = draw_grid_old
+def toSci(ax):
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((0,0))
+    ax.yaxis.set_major_formatter(formatter)
+    return 0

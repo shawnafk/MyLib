@@ -208,7 +208,7 @@ def load_particle(dat, grid_cache_len, s, xb, yb, zb):
     return Part
 
 
-def load_tail(dat, grid_cache_len, s):
+def load_tail(dat, grid_cache_len, s,vcrt):
     # ns storage particle num of a cell (ijk).In dat, each cell (:::) has (1+grid_cache_len)*s elements
     # within first ele denotes num particle of this species
     # Jx_array=np.zeros(dat.shape[1:-1])
@@ -236,7 +236,7 @@ def load_tail(dat, grid_cache_len, s):
                     vx = dat[p_offset + 6 * p + 3, i, j, k, 0]
                     vy = dat[p_offset + 6 * p + 4, i, j, k, 0]
                     vz = dat[p_offset + 6 * p + 5, i, j, k, 0]
-                    if (abs(vz) > 0.45):
+                    if (abs(vz) > vcrt):
                         s1 = (1 - xx) * (1 - xy)
                         s2 = xx * (1 - xy)
                         s3 = xx * xy
