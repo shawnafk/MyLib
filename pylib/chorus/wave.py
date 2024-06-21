@@ -30,51 +30,6 @@ def f_vr(w,wce,wpe):
     vr = (w - wce) /k
     return vr
 
-def fgamma(wl,wce,wpe,vpar,vper,nh):
-    kl = np.sqrt(wl**2 + wpe**2*wl/(wce - wl))
-    vg = 2*kl/(2*wl + wpe**2*wce/(wce-wl)**2)
-    gamma = np.sqrt(2*np.pi)*wce*vg*nh/(4*kl**2*vpar)*np.exp(-0.5*(wl-wce)**2/kl**2/vpar**2)*((vper/vpar)**2*(wce-wl)/wce -1)
-    return gamma
-
-import sympy as sp
-from scipy.optimize import fsolve
-#all frequency normalized to wpe
-
-#in code
-def funcG(a,b,c,d):
-    wl,wpe,wce,wce0,vpar,vper,nh,beta = sp.symbols('wl,wpe,wce,wce0,vpar,vper,nh,beta')
-    kl = sp.sqrt(wl**2 + wpe**2*wl/(wce - wl))
-    vg = 2*kl/(2*wl + wpe**2*wce/(wce-wl)**2)
-    temp =  (vper/vpar)**2
-    T1 = sp.sqrt(2*np.pi)*wce*vg*nh/(4*kl**2*vpar)
-    T2 = sp.exp(-0.5*(wl-wce)**2/kl**2/vpar**2)
-    T3 = (1+temp*(wce-wce0)/wce0)**-2
-    T4 = (1+beta*temp*(wce-wce0)/wce0)**-2
-    T5 = (beta*temp**2*(wce+wce0-2*wl)*(wce-wce0)/wce0**2)
-    T6 = (1+beta)*temp*(wce0-wl)/wce0 
-    T7 = -1
-    gamma = T1*T2*T3*T4*(T5+T6+T7)
-    dgamma = sp.diff(gamma,wl)
-    ddgamma = sp.diff(dgamma,wl)
-    fgamma = sp.lambdify([wl,wce,wce0,wpe],gamma.subs({vpar:a,vper:b,nh:c,beta:d}))
-    fdgamma = sp.lambdify([wl,wce,wce0,wpe],dgamma.subs({vpar:a,vper:b,nh:c,beta:d}))
-    fddgamma = sp.lambdify([wl,wce,wce0,wpe],ddgamma.subs({vpar:a,vper:b,nh:c,beta:d}))
-    return fgamma,fdgamma,fddgamma    
-
-from scipy import optimize 
-def solv_w(f,jac,wce,wce0,wpe,ig):
-    g = lambda x: f(x, wce, wce0, wpe)
-    dg = lambda x: jac(x, wce, wce0, wpe)
-    sol = optimize.root(g, ig, jac=dg, method= 'hybr')
-    return sol.x
-
-def growth(fce,fce0,fpe,vpa,vpe,nh,beta=0,ig=0.06):
-    fgamma,fdgamma,fddgamma = funcG(vpa,vpe,nh,beta)
-    f_m = solv_w(fdgamma,fddgamma,fce,fce0,fpe,ig)
-    k_m = f_k(f_m,fce,fpe)
-    gm = fgamma(f_m,fce,fce0,fpe)
-    return f_m,k_m,gm
-
 def calcWK(phi_w,dT,dz):
     #axis 0: t, 1: z
     #phase unwrap along dim 0; make continueous w.r.t time
@@ -235,5 +190,60 @@ def get_feq(vperp,vpara,gyro0,gyro,omega,kl,Jact,Omega,loss_cone=1e-16):
     dfeq =feq * (-gyro0/vperp**2 - (gyro-gyro0)/vpara**2 - kl**2*(PI+Omega)/vpara**2)
     return (feq,dfeq)
 '''
+
+
+
+# ---------------------------------------------------------------------------------------- wave growth rate analysis
+import sympy as sp
+from scipy.optimize import fsolve
+#all frequency normalized to wpe
+
+#construct gamma and its derivative function
+#in code
+#a parallel velocity
+#a perpendicular velocity
+#c density at equator
+#d loss cone
+def funcG(a,b,c,d):
+    wl,wpe,wce,wce0,vpar,vper,nh,beta = sp.symbols('wl,wpe,wce,wce0,vpar,vper,nh,beta')
+    kl = sp.sqrt(wl**2 + wpe**2*wl/(wce - wl))
+    vg = 2*kl/(2*wl + wpe**2*wce/(wce-wl)**2)
+    temp =  (vper/vpar)**2
+    T1 = sp.sqrt(2*np.pi)*wce*vg*nh/(4*kl**2*vpar)
+    T2 = sp.exp(-0.5*(wl-wce)**2/kl**2/vpar**2)
+    T3 = (1+temp*(wce-wce0)/wce0)**-2
+    T4 = (1+beta*temp*(wce-wce0)/wce0)**-2
+    T5 = (beta*temp**2*(wce+wce0-2*wl)*(wce-wce0)/wce0**2)
+    T6 = (1+beta)*temp*(wce0-wl)/wce0 
+    T7 = -1
+    gamma = T1*T2*T3*T4*(T5+T6+T7)
+    dgamma = sp.diff(gamma,wl)
+    ddgamma = sp.diff(dgamma,wl)
+    fgamma = sp.lambdify([wl,wce,wce0,wpe],gamma.subs({vpar:a,vper:b,nh:c,beta:d}))
+    fdgamma = sp.lambdify([wl,wce,wce0,wpe],dgamma.subs({vpar:a,vper:b,nh:c,beta:d}))
+    fddgamma = sp.lambdify([wl,wce,wce0,wpe],ddgamma.subs({vpar:a,vper:b,nh:c,beta:d}))
+    return fgamma,fdgamma,fddgamma    
+
+#find the most unstable frequency
+from scipy import optimize 
+def solv_w(f,jac,wce,wce0,wpe,ig):
+    g = lambda x: f(x, wce, wce0, wpe)
+    dg = lambda x: jac(x, wce, wce0, wpe)
+    sol = optimize.root(g, ig, jac=dg, method= 'hybr')
+    return sol.x
+
+def growth(fce,fce0,fpe,vpa,vpe,nh,beta=0,ig=0.06):
+    fgamma,fdgamma,fddgamma = funcG(vpa,vpe,nh,beta)
+    f_m = solv_w(fdgamma,fddgamma,fce,fce0,fpe,ig)
+    k_m = f_k(f_m,fce,fpe)
+    gm = fgamma(f_m,fce,fce0,fpe)
+    return f_m,k_m,gm
+
+#sololy gamma
+def fgamma(wl,wce,wpe,vpar,vper,nh):
+    kl = np.sqrt(wl**2 + wpe**2*wl/(wce - wl))
+    vg = 2*kl/(2*wl + wpe**2*wce/(wce-wl)**2)
+    gamma = np.sqrt(2*np.pi)*wce*vg*nh/(4*kl**2*vpar)*np.exp(-0.5*(wl-wce)**2/kl**2/vpar**2)*((vper/vpar)**2*(wce-wl)/wce -1)
+    return gamma
 
 

@@ -9,18 +9,7 @@ def readchor(file,length):
 def loadvar(chorus,**kargs):
     for key, value in kargs.items():
         chorus[key]=value
-vardict = {
-'z':'zpos',
-'k':'kmode',
-'g':'gyro',
-'p':'wp2',
-'j':'Jact',
-'gm':'gamma',
-'vr':'vr',
-'vg':'vg',
-'s':'source',
-'c':'chorus'
-}
+
 def loadvec(chorus,name,fmt='.out',folder=''):
     if fmt == '.out':
         for var in name:
@@ -43,11 +32,25 @@ def loadwave(chorus,name,length,fmt='.out',folder=''):
         return 1
     loadvar(chorus,**{'t':chorus[var].shape[0]})
 
-def loadall(wl,N,fmt='.out',f=''):
+vardict = {
+'z':'zpos',
+'k':'kmode',
+'g':'gyro',
+'d':'wp2',
+'j':'Jact',
+'gm':'gamma',
+'vr':'vr',
+'vg':'vg',
+'s':'source',
+'c':'chorus'
+}
+def loadall(fmt='.out',f=''):
     res={}
+    loadvec(res,['z','k','d','g','j','gm','vr','vg'],fmt=fmt,folder=f)
+    wl = res['k']*res['vr']+res['g']
+    N = len(res['k'])+1
     loadvar(res,**{'w':wl})
     loadvar(res,**{'n':N})
-    loadvec(res,['z','k','g','j','gm','vr','vg'],fmt=fmt,folder=f)
     loadwave(res,['c'],N,fmt=fmt,folder=f)
     loadwave(res,['s'],N,fmt=fmt,folder=f)
     res['dt']=np.average(abs(np.gradient(res['z'])/res['vr']))

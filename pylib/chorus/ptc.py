@@ -22,12 +22,26 @@ def find_zeta_ox(S):
     zeta_o,zeta_x = min_potential_zeta(S,zeta_1,zeta_2)
     return zeta_o,zeta_x
 
+def find_zeta_ox2(S):
+    #wtr can be any value
+	#X point, energy first order derivate = 0; - sin z + S  = 0 
+    zeta_1 = np.mod(np.arcsin(S),2*np.pi)
+    zeta_2 = np.pi-np.arcsin(S)
+    if (-np.cos(zeta_1)<0):
+        zeta_x=zeta_1
+        zeta_o=zeta_2
+    else:
+        zeta_x=zeta_2
+        zeta_o=zeta_1
+    return zeta_o,zeta_x
+
+
 #take wtr S and return (zeta0,zeta1,zeta2) : lowest potential point, X point, and O point
 def find_zeta(S):
     zeta_o,zeta_x = find_zeta_ox(S)
     const_E = potential(S,zeta_x)
     #use chebfun function to find the other intersection (zeta_o) of "E=const_E" line and "E = potential" curve
-    sol=chebfun(lambda zeta:2*(np.cos(zeta) + S*zeta)-(const_E),[0,2*np.pi])
+    sol=chebfun(lambda zeta: (np.cos(zeta) + S*zeta)-(const_E),[0,2*np.pi])
     #allzeta result may contains both zeta_o and zeta_x, choose the one with largest distance to our known zeta_x as zeta_o
     allzeta = []
     #filter nan
@@ -168,7 +182,7 @@ def f_alpha_t(freq,freq_t,gyro,gyro_s,wb2,k,vr,vg,J):
     #nonlinear
 def f_alpha_w(freq_t,gyro_s,wb2,k,kl,J,PI):
     #nonlinear dp: vg = - vr
-    alp = 4/wb2 * freq_t + (J + (kl/2/k - 1)*PI)*k/wb2 * gyro_sG
+    alp = 4/wb2 * freq_t + (J + (kl/2/k - 1)*PI)*k/wb2 * gyro_s
     return alp
 #all by defination
 def f_alpha(freq_t,gyro_s,wb2,k,k_s,vr,vg,J):

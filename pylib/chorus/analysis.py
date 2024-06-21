@@ -13,7 +13,8 @@ def comp(s):
 
 def g_phase(s):
     return np.angle(s)
-#omega,wavenumber,phasew,phases,vg,wb2,wb2_cplx,alpha,drg
+
+#return omega,wavenumber,phasew,phases,vg,wb2,wb2_cplx,alpha,drg
 def g_all(res):
     #complex
     compchor= mid(comp(res['c']),1)
@@ -70,5 +71,31 @@ def calc_wb(w,deltaB,vp=0.6,wce=1,wpe=5):
     mu = c*k/w
     return np.sqrt(mu* w/wce * vp * deltaB)
 
+def cold_current(compa,dT,w,wpe,wce):
+    E=-np.gradient(compa,axis=0)/dT
+    chi = wpe**2/w/(wce-w)
+    J = -1j*w*chi*E/4/np.pi
+    return J
 
+def B_evlp(compa,zpos,kmode):
+    paps=np.gradient(compa,axis=1)/np.gradient(zpos)
+    ika=1j*kmode*compa
+    B = 1j*(paps - ika)
+    return B
 
+def E_evlp(compa,dT,w):
+    papt=np.gradient(compa,axis=0)/dT
+    ioa=1j*w*compa
+    E = -(papt + ioa)
+    return E
+
+def hot_current_evlp(comps):
+    return -comps/4/np.pi
+
+def cold_current_evlp(E,w,wpe,wce):
+    chi = wpe**2/w/(wce-w)
+    J = -1j*w*chi*E/4/np.pi
+    return J
+
+def source_term(gm,compa,vg,kl):
+    return -1j * gamma * compa / 2/pi/vg*kl
