@@ -23,14 +23,17 @@ def loadvec(chorus,name,fmt='.out',folder=''):
 def loadwave(chorus,name,length,fmt='.out',folder=''):
     if fmt == '.out':
         for var in name:
-            chorus[var]=readchor(folder+vardict[var]+fmt,length)
+            dat = readchor(folder+vardict[var]+fmt,length)
+            #chorus[var]=dat
+            chorus[var]=(dat[:,:-1,:]+dat[:,1:,:])/2
     elif fmt == '.npy':
         for var in name:
-            chorus[var]=np.load(folder+vardict[var]+fmt)
+            dat = np.load(folder+vardict[var]+fmt)
+            #chorus[var]=dat
+            chorus[var]=(dat[:,:-1,:]+dat[:,1:,:])/2
     else:
         print('not loaded')
         return 1
-    loadvar(chorus,**{'t':chorus[var].shape[0]})
 
 vardict = {
 'z':'zpos',
@@ -45,16 +48,18 @@ vardict = {
 'c':'chorus'
 }
 def loadall(fmt='.out',f=''):
-    res={}
-    loadvec(res,['z','k','d','g','j','gm','vr','vg'],fmt=fmt,folder=f)
-    wl = res['k']*res['vr']+res['g']
-    N = len(res['k'])+1
-    loadvar(res,**{'w':wl})
-    loadvar(res,**{'n':N})
-    loadwave(res,['c'],N,fmt=fmt,folder=f)
-    loadwave(res,['s'],N,fmt=fmt,folder=f)
-    res['dt']=np.average(abs(np.gradient(res['z'])/res['vr']))
-    return res
+    conf={}
+    wave={}
+    loadvec(conf,['z','k','d','g','j','gm','vr','vg'],fmt=fmt,folder=f)
+    N = len(conf['k'])+1
+    loadvar(conf,**{'ns':N})
+    loadwave(wave,['c'],N,fmt=fmt,folder=f)
+    loadwave(wave,['s'],N,fmt=fmt,folder=f)
+    loadvar(conf,**{'nt':wave['c'].shape[0]})
+    wl = (conf['k']*conf['vr']+conf['g'])[int(conf['ns']/2)]
+    loadvar(conf,**{'w':wl})
+    conf['dt']=np.average(abs(np.gradient(conf['z'])/conf['vr']))
+    return conf,wave
 #cio.loadvec(res,['zpos','kmode','gyro','Jact','vr'],fmt='.npy')
 
 #phase space

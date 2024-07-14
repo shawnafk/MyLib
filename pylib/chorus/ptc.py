@@ -169,6 +169,9 @@ def f_wb2(gyro,J,a,freq,k):
     vperp = np.sqrt(2*gyro*mu)
     wtr2= vperp * k**2 * a
     return wtr2
+def f_do(dw,dk,vr,k0):
+    dO = (dw - vr *dk)/k0**2
+    return dO
 
 #J is a time constant
 
@@ -198,3 +201,12 @@ def c_rate_s(freq,gyro,gyro_s,k,vr,vg,J):
 
 def qk_wb(B,mu,w,vp):
     return np.sqrt(mu*w*vp*B)
+
+def f_feq(vperp,vpara,gyro0,gyro,omega,kl,Jact,Omega,loss_cone=1e-16):
+    small=1e-10
+    PI=(omega-gyro)/kl/kl
+    mu = Jact+PI+Omega
+    mu[mu<0] = small
+    feq = gyro0/((2.0*np.pi)**1.5*vperp*vperp*vpara) *np.exp(-mu*gyro0/vperp**2)*np.exp(-mu*(gyro-gyro0)/vpara**2)*np.exp(-0.5*(kl*(PI+Omega)/vpara)**2)
+    dfeq =feq * (-gyro0/vperp**2 - (gyro-gyro0)/vpara**2 - kl**2*(PI+Omega)/vpara**2)
+    return (feq,dfeq)

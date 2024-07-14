@@ -14,36 +14,61 @@ def comp(s):
 def g_phase(s):
     return np.angle(s)
 
+
 #return omega,wavenumber,phasew,phases,vg,wb2,wb2_cplx,alpha,drg
-def g_all(res):
+def g_base(conf,cs):
     #complex
-    compchor= mid(comp(res['c']),1)
-    compsour= mid(comp(res['s']),1)
+    #compchor= mid(comp(res['c']),1)
+    #compsour= mid(comp(res['s']),1)
+    compchor= comp(cs['c'])
+    compsour= comp(cs['s'])
+    #amplitude a and s
+    absc= abs(compchor)
+    abss= abs(compsour)
     #phase
     phasew = g_phase(compchor)
     phases = g_phase(compsour)
     #w and k
+    dz = np.gradient(conf['z'])
+    dw,dk = wave.calcWK(phasew,conf['dt'],dz)
+    omega=conf['w']+dw
+    wavenumber=conf['k']+dk
+    B = {}
+    varnames = ['absc','abss','phasew','phases','omega','wavenumber']
+    varvalues = [absc,abss,phasew,phases,omega,wavenumber]
+    B = {var_name: var_value for var_name, var_value in zip(varnames, varvalues)}
+    return B
+
+def g_EB(res,wave):
+    compchor = comp(wave['c'])
     dz = np.gradient(res['z'])
-    dw,dk = wave.calcWK(phasew,res['dt'],dz)
-    omega=res['w']+dw
-    wavenumber=res['k']+dk
+    #to E and B (use most unstable freq and k for approximation, error up to 20%)
+    E = -(np.gradient(compchor,axis=0)/res['dt'] + 1j*res['w']*compchor)
+    B = 1j*(np.gradient(compchor,axis=1)/dz - 1j*res['k']*compchor)
+    EB={'E':E,'B':B}
+    return EB
+
+def g_ptc(res,compchor,omega,wavenumber):
     # vg
+    dz = np.gradient(res['z'])
     vg = wave.calcVg(omega,wavenumber,res['dt'],dz)
     #particle
     dgyro = np.gradient(res['g'])/np.gradient(res['z'])
     dkmode = np.gradient(res['k'])/np.gradient(res['z'])
     dwdt =np.gradient(omega,axis=0)/res['dt']
-    ampchor=np.abs(compchor)
     PI = (res['w'] - res['g'])/res['k']**2
     #wb2 amp and vect
-    wb2 = ptc.f_wb2(res['g'],res['j'],ampchor,omega,wavenumber)
-    wb2_cplx = ptc.f_wb2(res['g'],res['j'],ampchor,omega,wavenumber)
+    wb2_cplx = ptc.f_wb2(res['g'],res['j'],compchor,omega,wavenumber)
     #alpha and drg
-    alpha = ptc.f_alpha_w(dwdt,dgyro,wb2,wavenumber,res['k'],res['j'],PI)
+    alpha = ptc.f_alpha_w(dwdt,dgyro,abs(wb2_cplx),wavenumber,res['k'],res['j'],PI)
     #alpha1 = ptc.f_alpha_w(0,dgyro,wb2,wavenumber,res['j'],res['j'],PI)
     drg=res['j']/res['k'] * dgyro - (res['w']-res['g'])**2/res['k']**4 * dkmode
-    #return omega,wavenumber,phasew,phases,vg,wb2,wb2_cplx,alpha,alpha1,drg
-    return omega,wavenumber,phasew,phases,vg,wb2,wb2_cplx,alpha,drg
+    #ret   0      1    2      3      4      5        6  7  8     9      10   11 
+    #return absc,abss,phasew,phases,omega,wavenumber, E, B ,vg,wb2_cplx,alpha,drg
+    varnames = ['vg','wb2_cplx','alpha','drg']    
+    varvalues = [vg,wb2_cplx,alpha,drg]
+    W = {var_name: var_value for var_name, var_value in zip(varnames, varvalues)}
+    return W
 
 #interp_R=ptc.init_R_ratio()
 def project(chor,sour):
