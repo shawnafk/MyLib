@@ -95,7 +95,7 @@ def time_ratio(R,w,k,wce,wpe,gamma):
 def GM_L(wl,nh,v_para,v_perp,wpe,wce,wpe0,wce0,beta):
     aniso = (v_perp/v_para)**2
     kl=linear_k(wl,wpe,wce)
-    vg=cvg(wl,kl,wce,wpe)
+    vg=cvg(wl,kl,wce,wpe) # type: ignore
     gml = np.sqrt(2*np.pi) * wce*vg*nh*wpe0**2/(4*kl**2*v_para)*np.exp(-(wl-wce)**2/(2*kl**2*v_para**2)) * (1+aniso*(wce-wce0)/wce0)**-2 *  (1+beta*aniso*(wce-wce0)/wce0)**-2 * (beta*aniso**2*((wce+wce0-2*wl)*(wce-wce0))/wce0**2 + (1+beta)*aniso*(wce0-wl)/wce0 -1)
     return gml
 
@@ -240,10 +240,53 @@ def growth(fce,fce0,fpe,vpa,vpe,nh,beta=0,ig=0.06):
     return f_m,k_m,gm
 
 #sololy gamma
-def fgamma(wl,wce,wpe,vpar,vper,nh):
+def f_gamma(wl,wce0,wce,wpe,vpar,vper,nh,beta=0):
     kl = np.sqrt(wl**2 + wpe**2*wl/(wce - wl))
     vg = 2*kl/(2*wl + wpe**2*wce/(wce-wl)**2)
-    gamma = np.sqrt(2*np.pi)*wce*vg*nh/(4*kl**2*vpar)*np.exp(-0.5*(wl-wce)**2/kl**2/vpar**2)*((vper/vpar)**2*(wce-wl)/wce -1)
+    temp =  (vper/vpar)**2
+    T1 = np.sqrt(2*np.pi)*wce*vg*nh/(4*kl**2*vpar)
+    T2 = np.exp(-0.5*(wl-wce)**2/kl**2/vpar**2)
+    T3 = (1+temp*(wce-wce0)/wce0)**-2
+    T4 = (1+beta*temp*(wce-wce0)/wce0)**-2
+    T5 = (beta*temp**2*(wce+wce0-2*wl)*(wce-wce0)/wce0**2)
+    T6 = (1+beta)*temp*(wce0-wl)/wce0 
+    T7 = -1
+    gamma = T1*T2*T3*T4*(T5+T6+T7)
     return gamma
 
 
+def B_evlp(compa,dz,kmode):
+    paps=np.gradient(compa,axis=1)/dz
+    ika=1j*kmode*compa
+    B = 1j*(paps - ika)
+    return B
+
+def E_evlp(compa,dT,w):
+    papt=np.gradient(compa,axis=0)/dT
+    ioa=1j*w*compa
+    E = -(papt + ioa)
+    return E
+
+def Jh_evlp(comps):
+    return -comps/4/np.pi
+
+def Jc_evlp(E,w,wpe,wce):
+    chi = wpe**2/w/(wce-w)
+    J = -1j*w*chi*E/4/np.pi
+    return J
+from chorus import convert
+def cpst_j(s,c):
+    phase_w = convert.g_phase(c)
+    cpst_s = s * np.exp(-phase_w*1j)
+    #real is J_B while imagnary is J_E
+    return cpst_s
+
+#da^2/dt
+def power_trans(j,a,vg,kl):
+    return 4 * np.pi * vg / kl * np.real(-1j*j*np.conj(a))
+
+
+def delta_phi(j,a):
+    phi_j = np.angle(j)
+    phi_a = np.angle(a)
+    return phi_j - phi_a

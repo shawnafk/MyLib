@@ -58,11 +58,23 @@ def gen_si(wce0,wpe0):
     consts['b0'] = wce0/qe_cgs*me_cgs*c_cgs/1e4
     return units,consts
 
-
-Uchar={
+#m is modified mu, differs q/m with real mu
+Ucharp={
+'a':"$~\cdot ~ e /m_e c^2$",
+'m':"$~\cdot ~ \omega_\mathrm{pe0}/m_e c^2$",
 't':"$~/~\omega_{\mathrm{pe0}}^{-1}$",
 'f':"$~/~\omega_{\mathrm{pe0}}$",
 's':"$~\cdot~\omega_{\mathrm{pe0}}/\mathrm{c}$",
 'k':"$~\cdot~\mathrm{c}/\omega_{\mathrm{pe0}}$",
 'v':"$~/~\mathrm{c}$"
 }
+Ucharc={
+'a':"$~\cdot ~ e /m_e c^2$",
+'m':"$~\cdot ~ \omega_\mathrm{ce0}/m_e c^2$",
+'t':"$~/~\omega_{\mathrm{ce0}}^{-1}$",
+'f':"$~/~\omega_{\mathrm{ce0}}$",
+'s':"$~\cdot~\omega_{\mathrm{ce0}}/\mathrm{c}$",
+'k':"$~\cdot~\mathrm{c}/\omega_{\mathrm{ce0}}$",
+'v':"$~/~\mathrm{c}$"
+}
+

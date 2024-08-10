@@ -155,6 +155,15 @@ def gmap(filename):
 	offset=intp*(y['Dim']+3)
 	Data=np.memmap(filename,dtype,'r',offset,order='F',shape=tuple(DimArray))
 	return Data
+def gmap_info(filename,y):
+	dtype=y['Precision']
+	DimArray=y['DimArray']
+	intp=8;
+	offset=intp*(y['Dim']+3)
+	Data=np.memmap(filename,dtype,'r',offset,order='F',shape=tuple(DimArray))
+	return Data
+
+
 #For EM data
 def map_E(filename):
 	EB=gmap(filename)
