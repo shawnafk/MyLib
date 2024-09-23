@@ -275,16 +275,17 @@ def Jc_evlp(E,w,wpe,wce):
     J = -1j*w*chi*E/4/np.pi
     return J
 from chorus import convert
-def cpst_j(s,c):
+
+
+def cpst_j(j,c):
     phase_w = convert.g_phase(c)
-    cpst_s = s * np.exp(-phase_w*1j)
+    cpst_j = j * np.exp(-phase_w*1j)
     #real is J_B while imagnary is J_E
-    return cpst_s
+    return cpst_j
 
 #da^2/dt
 def power_trans(j,a,vg,kl):
     return 4 * np.pi * vg / kl * np.real(-1j*j*np.conj(a))
-
 
 def delta_phi(j,a):
     phi_j = np.angle(j)

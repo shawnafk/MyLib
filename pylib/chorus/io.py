@@ -224,3 +224,9 @@ def g_ptc(ori='ori.h5',post='post.h5'):
     varvalues = [wb2_cplx,alpha,drg,dO]
     dumph5(post,'ptc',varnames,varvalues)
     return # type: ignore
+
+def init(ori='ori.h5',post='post.h5'):
+    init_h5(ori,post)
+    g_wave(ori,post)
+    g_ptc(ori,post)
+

@@ -67,6 +67,7 @@ def hole_width(S,wtr,k):
     return dO
 
 ##omura
+#je is n jb is m
 def resonant_J(S):
     zeta_c,zeta_x,_ = find_zeta(S)
     #zeta_1 is the X point

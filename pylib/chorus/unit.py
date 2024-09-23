@@ -73,6 +73,7 @@ Ucharc={
 'm':"$~\cdot ~ \omega_\mathrm{ce0}/m_e c^2$",
 't':"$~/~\omega_{\mathrm{ce0}}^{-1}$",
 'f':"$~/~\omega_{\mathrm{ce0}}$",
+'f2':"$~/~\omega_{\mathrm{ce0}}^{-2}$",
 's':"$~\cdot~\omega_{\mathrm{ce0}}/\mathrm{c}$",
 'k':"$~\cdot~\mathrm{c}/\omega_{\mathrm{ce0}}$",
 'v':"$~/~\mathrm{c}$"

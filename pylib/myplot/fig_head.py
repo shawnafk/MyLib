@@ -1,15 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-plt.style.use('/Users/shawn/MyLib/pylib/myplot/prl.mplstyle')
+#plt.style.use('/Users/shawn/syncthing/MyLib/pylib/myplot/prl.mplstyle')
 shadeopts = {'cmap': 'jet', 'shading': 'gouraud',"rasterized":True}
 fig_w=3.375/1.1*2
 fsp='./'
 scale=1.5
-#for p in os.environ.get('PYTHONPATH').split(':'):
-#	fname=p+'./prl.mplstyle'
-#	if os.path.exists(fname):
-#		plt.style.use(fname)
+for p in os.environ.get('PYTHONPATH').split(':'):
+    fname=p+'/myplot/prl.mplstyle'
+    if os.path.exists(fname):
+        plt.style.use(fname)
 #		break
 import matplotlib as mpl
 import matplotlib.font_manager as font_manager
@@ -17,7 +17,7 @@ import matplotlib.font_manager as font_manager
 import matplotlib.ticker as ticker
 from matplotlib.pyplot import MultipleLocator
 axlbfs=10
-def multiple_formatter(denominator=2, number=np.pi, latex='\pi'):
+def multiple_formatter(denominator=2, number=np.pi, latex=r'$\pi$'):
     def gcd(a, b):
         while b:
             a, b = b, a%b
@@ -45,7 +45,7 @@ def multiple_formatter(denominator=2, number=np.pi, latex='\pi'):
                 return r'$\frac{%s%s}{%s}$'%(num,latex,den)
     return _multiple_formatter
 class Multiple:
-    def __init__(self, denominator=2, number=np.pi, latex='\pi'):
+    def __init__(self, denominator=2, number=np.pi, latex=r'$\pi$'):
         self.denominator = denominator
         self.number = number
         self.latex = latex
@@ -140,4 +140,9 @@ def toSci(ax):
     formatter.set_scientific(True)
     formatter.set_powerlimits((0,0))
     ax.yaxis.set_major_formatter(formatter)
+    return 0
+
+def add_ord(axes,ord,locx=0.1,locy=0.2,sz=14,c='k'):
+    for ax,tt in zip(axes,ord):
+        plt.text(locx, locy,tt,fontsize=sz,horizontalalignment='center',verticalalignment='center',transform=ax.transAxes,color=c)
     return 0
