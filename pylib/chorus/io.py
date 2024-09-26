@@ -107,7 +107,7 @@ def loadh5(name,grp,varname):
             return dat[...]
 
 def load_desc(ori='ori.h5',post='post.h5'):
-    dori = " z:zpos, k:kmode, g:gyro, d:wp2, j:Jact, p:PI, gm:gamma, vr:vr, vg:vg, s:source, c:chorus, mu."
+    dori = "z:zpos, k:kmode, g:gyro, d:wp2, j:Jact, p:PI, gm:gamma, vr:vr, vg:vg, s:source, c:chorus, mu."
     dpost= 'contains: absc:|a|; abss:|s|; phasew:|ph ase wave|; phases:source phase; omega:frequency chirping; wavenumber:wavenumber chirping; vg:modified vg; E:Electric field slowly varying; B:Magnetic field slowly varying; Jh:real slowly varying hot current; Jc:slowly varying cold current from dispersion relation.'
         
 
