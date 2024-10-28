@@ -25,10 +25,10 @@ def wce_B(wce):
 #m = mi/mp
 #q charge state
 def n_wpi(n,q=1,m=1):
-    return 2.10e2*q*m**-0.5*np.sqrt(n)
+    return 1.32e3*q*m**-0.5*np.sqrt(n)
 
 def wpi_n(wpe,q=1,m=1):
-    return (wpe/(2.10e2*q*m**-0.5))**2
+    return (wpe/(1.32e3*q*m**-0.5))**2
 
 #B in gauss
 def B_wci(b,q=1,m=1):
