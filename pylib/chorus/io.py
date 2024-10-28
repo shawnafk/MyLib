@@ -97,14 +97,17 @@ def dumph5(name,grp,varname,var):
                 group.create_dataset(vn, data=v)
 
 #only load one eveal return
-def loadh5(name,grp,varname):
+def loadh5(name,grp,varname,Nt=''):
     with h5py.File(name, 'r') as f:
         dat = f[grp][varname]
         dim = len(dat.shape)
         if dim == 0:
             return dat[()]
         else:
-            return dat[...]
+            if Nt == '':
+                return dat[...]
+            else:
+                 return dat[:Nt,...]
 
 def load_desc(ori='ori.h5',post='post.h5'):
     dori = "z:zpos, k:kmode, g:gyro, d:wp2, j:Jact, p:PI, gm:gamma, vr:vr, vg:vg, s:source, c:chorus, mu."

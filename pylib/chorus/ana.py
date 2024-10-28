@@ -26,10 +26,10 @@ def draw_boundary(ax,S,wtr,kapa,shift,offset=0):
     ax.scatter(zeta_c1,shift,s=50,marker='^',facecolors='none', edgecolors='r',color='k',lw=1.5)
     return 0
 
-def get_jri(o='ori.h5',p='post.h5'):
+def get_jri(o='ori.h5',p='post.h5',Nt=''):
     from chorus import io, wave
-    jh = io.loadh5(p,'wave','Jh')
-    a = io.loadh5(o,'wave','c')
+    jh = io.loadh5(p,'wave','Jh',Nt)
+    a = io.loadh5(o,'wave','c',Nt)
     cpstj = wave.cpst_j(jh,a)
     jr = np.real(cpstj)
     ji = np.imag(cpstj)
