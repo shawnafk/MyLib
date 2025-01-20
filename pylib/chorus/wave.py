@@ -30,6 +30,14 @@ def f_vr(w,wce,wpe):
     vr = (w - wce) /k
     return vr
 
+def f_Omega(w,wl,wce,wpe):
+    vr_0 = f_vr(wl,wce,wpe)
+    k_0 = f_k(wl,wce,wpe)
+    PI = vr_0/k_0 
+    vr = f_vr(w,wce,wpe)
+    k = f_k(w,wce,wpe)
+    return vr/k - PI
+
 def calcWK(phi_w,dT,dz):
     #axis 0: t, 1: z
     #phase unwrap along dim 0; make continueous w.r.t time

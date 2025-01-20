@@ -67,7 +67,5 @@ def cold_current(compa,dT,w,wpe,wce):
     J = -1j*w*chi*E/4/np.pi
     return J
 
-
-
 def source_term(gm,compa,vg,kl):
     return -1j * gm * compa / 2/np.pi/vg*k

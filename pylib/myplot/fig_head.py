@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-#plt.style.use('/Users/shawn/syncthing/MyLib/pylib/myplot/prl.mplstyle')
 shadeopts = {'cmap': 'jet', 'shading': 'gouraud',"rasterized":True}
 fig_w=3.375/1.1*2
 fsp='./'
