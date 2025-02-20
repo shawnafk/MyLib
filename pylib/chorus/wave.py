@@ -17,6 +17,12 @@ def f_k(w,wce,wpe):
     k=np.sqrt(w**2+w*wpe**2/(wce-w))/c
     return k
 
+def f_w(k,wce,wpe):
+    c=1
+    w=wce/(wpe**2/c**2/k**2+1)
+    return w
+
+
 #knl = (wc-wl)/(wc - wall)*kl
 
 def f_vg(w,wce,wpe):

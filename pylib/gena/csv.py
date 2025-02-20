@@ -14,14 +14,14 @@ def seconds_to_reference_time(target_time_str):
     # 返回时间差的秒数
     return time_diff.total_seconds()
 
-def df_slices_time_by(df,t1,t2,by='Satellite seconds'):
+def df_slices_by(df,t1,t2,by='Satellite seconds'):
     s1 = seconds_to_reference_time(t1)
     s2 = seconds_to_reference_time(t2)
     # is it correct to use & here?
     #return df[(df['TimeStamp'] > s1) & (df['TimeStamp'] < s2)]
     return df[(df[by] > s1) & (df[by] < s2)]
 
-def wrap_df(fn):
+def df_load(fn):
     return  pd.read_csv(fn,encoding='gbk',header=0).iloc[:,:]
 
 
