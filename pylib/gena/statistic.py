@@ -1,63 +1,42 @@
 import matplotlib.pyplot as plt
 from myplot import aux
 import numpy as np
-from gena import csv
+from . import csv0
 import pandas as pd
-X_MCP = 145
-Y_MCP = 55
-#ns limit need divided by 2
-A_X_LEFT_NS  = -50.44742
-A_X_RIGHT_NS = 54.91726
+from . import physical as phy
+from . import filters as flt
+#from level 1A
+#return total
+def ratio_levels(df,prob='A',snid=1):
+    phy.init_param(snid)
+    if prob == 'A':
+        xlim = phy.A_NS_XLIM
+        ylim = phy.A_NS_YLIM
+    if prob == 'B':
+        xlim = phy.B_NS_XLIM
+        ylim = phy.B_NS_YLIM
+    len1,df1  = flt.start_end_eff(df)
+    len2,df2  = flt.start_end_eff(df1)
+    len3,df3  = flt.start_ns_eff(df2,xlim,ylim)
+    len4,df4  = flt.match_eff(df3)
+    len5,_  = flt.onboard_eff(df4)
+    return len1,len2,len3,len4,len5
 
-A_Y_LEFT_NS  = -34.71570
-A_Y_RIGHT_NS = 23.59747
 
-B_X_LEFT_NS  = -51.18360
-B_X_RIGHT_NS = 53.40479
-
-#SN_ID 1 orbit 2 ground
-SN_ID = 1
-if SN_ID == 1:
-    #B_Y_LEFT_NS  = -16.68598
-    #B_Y_RIGHT_NS = 41.62719
-    B_Y_LEFT_NS  = -34.71570
-    B_Y_RIGHT_NS = 23.59747
-
-if SN_ID == 2:
-    B_Y_LEFT_NS  = -34.71570
-    B_Y_RIGHT_NS = 23.59747
-
-A_X_MAX_NS = (abs(A_X_RIGHT_NS) + abs(A_X_LEFT_NS));
-A_Y_MAX_NS = (abs(A_Y_RIGHT_NS) + abs(A_Y_LEFT_NS));
-#need divided by 2 and yes
-A_NS_XLIM = A_X_MAX_NS/2;
-A_NS_YLIM = A_Y_MAX_NS/2;
-A_X_CENTER_NS = (A_X_LEFT_NS + A_X_RIGHT_NS);
-A_Y_CENTER_NS = (A_Y_LEFT_NS + A_Y_RIGHT_NS);
-A_X_COF = X_MCP/A_X_MAX_NS;
-A_Y_COF = Y_MCP/A_Y_MAX_NS;
-
-B_X_MAX_NS = abs(B_X_RIGHT_NS) + abs(B_X_LEFT_NS);
-B_Y_MAX_NS = abs(B_Y_RIGHT_NS) + abs(B_Y_LEFT_NS);
-B_NS_XLIM = B_X_MAX_NS/2;
-B_NS_YLIM = B_Y_MAX_NS/2;
-#should divided by 2 but not yet
-B_X_CENTER_NS = (B_X_LEFT_NS + B_X_RIGHT_NS);
-B_Y_CENTER_NS = (B_Y_LEFT_NS + B_Y_RIGHT_NS);
-B_X_COF = X_MCP/B_X_MAX_NS;
-B_Y_COF = Y_MCP/B_Y_MAX_NS;
-
-def show_start_end1(df,flag):
+#plot from level 1
+def show_start_end_level1(df,flag,snid=1):
+    phy.init_param(snid)
     if flag == 'a':
-        xc = A_X_CENTER_NS
-        yc = A_Y_CENTER_NS
-        xcoef = A_X_COF
-        ycoef = A_Y_COF
+        xc = phy.A_X_CENTER_NS
+        yc = phy.A_Y_CENTER_NS
+        xcoef = phy.A_X_COF
+        ycoef = phy.A_Y_COF
     if flag == 'b':
-        xc = B_X_CENTER_NS
-        yc = B_Y_CENTER_NS
-        xcoef = B_X_COF
-        ycoef = B_Y_COF
+        xc = phy.B_X_CENTER_NS
+        yc = phy.B_Y_CENTER_NS
+        xcoef = phy.B_X_COF
+        ycoef = phy.B_Y_COF
+        
     f,(ax1,ax2)=plt.subplots(2,1)
     x1 = (df['X2_start (ns)'] - df['X1_start (ns)'])
     y1 = (df['Y2_start (ns)'] - df['Y1_start (ns)'])
@@ -73,75 +52,107 @@ def show_start_end1(df,flag):
     ax1.legend()
     ax2.legend()
     aux.draw_rectangle(ax1,90,30)
+    aux.draw_rectangle(ax2,90,30)
+    aux.draw_rectangle(ax1,150,60)
     aux.draw_rectangle(ax2,150,60)
     ax1.set_xlabel('X (mm)')
     ax1.set_ylabel('Y (mm)')
     ax2.set_xlabel('X (mm)')
     ax2.set_ylabel('Y (mm)')
-    return f
+    return f,(ax1,ax2)
 
 #level2
-def show_start_end(df):
+def show_start_end_level2(df):
     f,(ax1,ax2)=plt.subplots(2,1)
     ax1.scatter(df['X1 (mm)'], df['Y1 (mm)'], label = 'start',s=1)
     ax2.scatter(df['X2 (mm)'], df['Y2 (mm)'], label = 'end',s=1)
     ax1.legend()
     ax2.legend()
     aux.draw_rectangle(ax1,90,30)
+    aux.draw_rectangle(ax1,150,60)
+    aux.draw_rectangle(ax2,90,30)
     aux.draw_rectangle(ax2,150,60)
     ax1.set_xlabel('X (mm)')
     ax1.set_ylabel('Y (mm)')
     ax2.set_xlabel('X (mm)')
     ax2.set_ylabel('Y (mm)')
-    return f
+    return f,(ax1,ax2)
 
-#level 1A
-def ratio_levels(df):
-    sum = np.array((df['X1_start (ns)'] * df['X2_start (ns)'] * df['Y1_start (ns)'] * df['Y2_start (ns)'] * df['X1_end (ns)'] * df['X2_end (ns)'] * df['Y1_end (ns)'] * df['Y2_end (ns)']))
-    df1B = df[sum!=0]
-    all = sum.shape[0]
-    nonzero = np.where(sum!=0)[0].shape[0]
-    
-    df1C = df1B[(df1B['X1_start (ns)']<53) & (df1B['X2_start (ns)']<53) & (df1B['Y1_start (ns)']<40) & (df1B['Y2_start (ns)']<40)]
-    nseff = df1C.shape[0]
-    
-    sumx =  np.array((df1C['X1_start (ns)'] + df1C['X2_start (ns)']))
-    sumy =  np.array((df1C['Y1_start (ns)'] + df1C['Y2_start (ns)']))
-    
-    df2 = df1C[(sumx<55) & (sumx>45) & (sumy<45) & (sumy>35)]
-    match_eff = df2.shape[0]
-    return [nonzero, all, nonzero/all],[nseff,nonzero,nseff/nonzero],[match_eff,nseff,match_eff/nseff]
+import matplotlib.dates as mdates
+from datetime import timedelta
 
+def get_flux(H):
+    ht = np.histogram(H,np.arange(H[0],np.array(H)[-1],60))
+    return ht[1][1:],ht[0]
 
-def ratio_new(df,prob):
-    if prob == 'A':
-        xlim = A_NS_XLIM
-        ylim = A_NS_YLIM
-    if prob == 'B':
-        xlim = B_NS_XLIM
-        ylim = B_NS_YLIM
-    sum = np.array((df['X1_start (ns)'] * df['X2_start (ns)'] * df['Y1_start (ns)'] * df['Y2_start (ns)'] ))
-    df1B = df[sum!=0]
-    df1B = df1B[(df1B['X1_start (ns)']<xlim) & (df1B['X2_start (ns)']<xlim) & (df1B['Y1_start (ns)']<ylim) & (df1B['Y2_start (ns)']<ylim)]
-    all = len(df)
-    len1B = len(df1B)
-    sum = np.array((df1B['X1_end (ns)'] * df1B['X2_end (ns)'] * df1B['Y1_end (ns)'] * df1B['Y2_end (ns)'] ))
-    df1C = df1B[sum!=0]
-    len1C = len(df1C)
+#show parameters and counts
+def show_para_count(r,d,d4,d8,flag,gap=10):
+    rdate = pd.to_datetime(r.iloc[:, 0])
+    ddate = pd.to_datetime(d.iloc[:, 0])
+
+    if flag == 'A':
+        fig, ax = plt.subplots(5,1,sharex=True)
+        ax[0].plot(rdate[::gap], r['HV_MCP1'][::gap],'.'s=1)
+        ax[1].plot(rdate[::gap], r['MCP1'][::gap],'.'s=1)
+        ax[2].plot(rdate[::gap], r['AX'][::gap],'.',s=1,label = 'AX')
+        ax[2].plot(rdate[::gap], r['AY'][::gap],'.',s=1,label = 'AY')
+        ax[2].legend()
+        ax[3].plot(rdate[::gap], r['TA'][::gap],'.')
+        for ai in range(4):
+            ax[ai].set_xticklabels([])
+            #ax[ai].set_xticks([])
+        #selected_indices = np.arange(0, len(r), int(len(r)/numtick))
+        #ax[4].set_xticks(r['Date'][selected_indices])
+        ax[0].set_ylabel('HV')
+        ax[0].axhline(-2800,color='r')
+        ax[1].set_ylabel('MCP' )
+        ax[1].set_ylim(0,800)
+        ax[2].set_ylabel('THE')
+        ax[2].set_ylim(0,800)
+        ax[3].set_ylabel('TEMP')
+    elif flag == 'B':
+        fig, ax = plt.subplots(5,1,sharex=True)
+        ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],'.',s=1)
+        ax[1].plot(rdate[::gap], r['MCP2'][::gap],'.',s=1)
+        ax[2].plot(rdate[::gap], r['BX1'][::gap],'.',s=1,label = 'BX1')
+        ax[2].plot(rdate[::gap], r['BY1'][::gap],'.',s=1,label = 'BY1')
+        ax[2].plot(rdate[::gap], r['BX2'][::gap],'.',s=1,label = 'BX2')
+        ax[2].plot(rdate[::gap], r['BY2'][::gap],'.',s=1,label = 'BY2')
+        ax[2].plot(rdate[::gap], r['BG'][::gap],'.',s=1,label = 'BG')
+        ax[2].legend()
+        ax[3].plot(rdate[::gap], r['TB'][::gap],'.',s=1)
+        for ai in range(4):
+            ax[ai].set_xticklabels([])
+        #selected_indices = np.arange(0, len(r), int(len(r)/numtick))
+        #ax[4].set_xticks(r['Date'][selected_indices])
+        ax[0].set_ylabel('HV')
+        ax[0].axhline(-2800,color='r')
+        ax[1].set_ylabel('MCP')
+        ax[1].set_ylim(0,800)
+        ax[2].set_ylabel('THE')
+        ax[2].set_ylim(0,800)
+        ax[3].set_ylabel('TEMP')
+    else:
+        print('name not correct')
+    t,c = get_flux(np.array(d['Timestamp']))
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax[-1].plot(ddate[0]+timedelta_array, c, '',s=1, label = 'Any')
     
-    sumx =  np.array((df1C['X1_start (ns)'] + df1C['X2_start (ns)']))
-    sumy =  np.array((df1C['Y1_start (ns)'] + df1C['Y2_start (ns)']))
+    t,c = get_flux(np.array(d4['Timestamp']))
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax[-1].plot(ddate[0]+timedelta_array, c, '.',s=1, label = 'Start')
     
-    df1D = df1C[(sumx<55) & (sumx>45) & (sumy<45) & (sumy>35)]
-    len1D = len(df1D)
-    return [all, len1B, len1C,len1D]
+    t,c = get_flux(np.array(d8['Timestamp']))
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax[-1].plot(ddate[0]+timedelta_array, c, '-',s=1, label = 'ALL')
+    ax[-1].legend()
+    date_format = mdates.DateFormatter('%Y-%m-%d %H:%M')
+    ax[-1].xaxis.set_major_formatter(date_format)
+    ax[-1].set_ylabel('Counts/Min')
+    fig.autofmt_xdate()
+    return fig,ax
 
-def ratio_l2(df):
-    df_rational= df[(df['X1 (mm)']<90) & (df['Y1 (mm)']<30) & (df['X2 (mm)']<150) & (df['Y2 (mm)']<60)]
-    num_rational = df_rational.shape[0]
-    all=df.shape[0]
-    return [num_rational,all,num_rational/all]
-
+# ================================ statistic ================================
 def channel_count_rate(df,c):
     if c == 'X1':
         count = ((df['X1_start (ns)'] != 0) | (df['X1_end (ns)'])).sum()
@@ -168,13 +179,14 @@ def pspe(a,b):
     ps = a/pe
     return ps,pe
 
-def show_start_bar(df, prob, folder):
+def show_start_bar(df, prob, folder,ssid=1):
+    phy.init_param(ssid)
     if prob == 'a':
-        xlim = A_NS_XLIM
-        ylim = A_NS_YLIM
+        xlim = phy.A_NS_XLIM
+        ylim = phy.A_NS_YLIM
     if prob == 'b':
-        xlim = B_NS_XLIM
-        ylim = B_NS_YLIM
+        xlim = phy.B_NS_XLIM
+        ylim = phy.B_NS_YLIM
     ybins = [1, ylim, ylim + 30, ylim + 30 *2, ylim + 30 * 3, ylim + 30 * 4, 300]
     ylabels = [str(int(y1)) + '-' + str(int(y2)) for y1,y2 in zip(ybins[:-1],ybins[1:])]
     xbins = [1, xlim, xlim + 50, xlim + 50 *2, xlim + 50 * 3, xlim + 50 * 4, xlim + 50 * 5, xlim + 50 * 6, 700]
@@ -226,13 +238,13 @@ def show_start_bar(df, prob, folder):
             f.savefig(folder + cnl)
 
 
-def show_1c_bar(df, prob, folder):
+def show_1c_bar(df, prob, folder,ssid=1):
     if prob == 'a':
-        xlim = A_NS_XLIM
-        ylim = A_NS_YLIM
+        xlim = phy.A_NS_XLIM
+        ylim = phy.A_NS_YLIM
     if prob == 'b':
-        xlim = B_NS_XLIM
-        ylim = B_NS_YLIM
+        xlim = phy.B_NS_XLIM
+        ylim = phy.B_NS_YLIM
     ybins = [1, ylim, ylim + 30, ylim + 30 *2, ylim + 30 * 3, ylim + 30 * 4, 300]
     ylabels = [str(int(y1)) + '-' + str(int(y2)) for y1,y2 in zip(ybins[:-1],ybins[1:])]
     xbins = [1, xlim, xlim + 50, xlim + 50 *2, xlim + 50 * 3, xlim + 50 * 4, xlim + 50 * 5, xlim + 50 * 6, 700]
@@ -287,20 +299,20 @@ def show_1c_bar(df, prob, folder):
 
 if __name__ == '__main__':
     #Level 1 A
-    df_1A = csv.wrap_df("./L1_a.csv")
-    df_1A_1 = csv.df_slices_time(df_1A,'2024-10-01 00:00:00','2024-10-15 00:00:00')
+    df_1A = csv0.wrap_df("./L1_a.csv")
+    df_1A_1 = csv0.df_slices_time(df_1A,'2024-10-01 00:00:00','2024-10-15 00:00:00')
 
     #phase 1
     savepath='phase1_a/'
-    csv.folder(savepath)
-    csv.show_channel_bar(df_1A_1,'x','X1_start (ns)',savepath)
-    csv.show_channel_bar(df_1A_1,'x','X1_end (ns)',savepath)
-    csv.show_channel_bar(df_1A_1,'x','X2_start (ns)',savepath)
-    csv.show_channel_bar(df_1A_1,'x','X2_end (ns)',savepath)
-    csv.show_channel_bar(df_1A_1,'y','Y1_start (ns)',savepath)
-    csv.show_channel_bar(df_1A_1,'y','Y1_end (ns)',savepath)
-    csv.show_channel_bar(df_1A_1,'y','Y2_start (ns)',savepath)
-    csv.show_channel_bar(df_1A_1,'y','Y2_end (ns)',savepath)
+    csv0.folder(savepath)
+    csv0.show_channel_bar(df_1A_1,'x','X1_start (ns)',savepath)
+    csv0.show_channel_bar(df_1A_1,'x','X1_end (ns)',savepath)
+    csv0.show_channel_bar(df_1A_1,'x','X2_start (ns)',savepath)
+    csv0.show_channel_bar(df_1A_1,'x','X2_end (ns)',savepath)
+    csv0.show_channel_bar(df_1A_1,'y','Y1_start (ns)',savepath)
+    csv0.show_channel_bar(df_1A_1,'y','Y1_end (ns)',savepath)
+    csv0.show_channel_bar(df_1A_1,'y','Y2_start (ns)',savepath)
+    csv0.show_channel_bar(df_1A_1,'y','Y2_end (ns)',savepath)
 
 
     #df_1A_2 = df_slices_time(df_1A,'2024-10-15 00:00:00','2024-10-30 00:00:00')
