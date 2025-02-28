@@ -24,7 +24,7 @@ def ratio_levels(df,prob='A',snid=1):
 
 
 #plot from level 1
-def show_start_end_level1(df,flag,snid=1):
+def show_start_end_level1(df,flag,snid=1,msize=1):
     phy.init_param(snid)
     if flag == 'a':
         xc = phy.A_X_CENTER_NS
@@ -47,8 +47,8 @@ def show_start_end_level1(df,flag,snid=1):
     y1 =  (y1 - yc) * ycoef
     x2 =  (x2 - xc) * xcoef
     y2 =  (y2 - yc) * ycoef
-    ax1.scatter(x1,y1, label = 'start',s=1)
-    ax2.scatter(x2,y2, label = 'end',s=1)
+    ax1.scatter(x1,y1, label = 'start',markersize=msize)
+    ax2.scatter(x2,y2, label = 'end',markersize=msize)
     ax1.legend()
     ax2.legend()
     aux.draw_rectangle(ax1,90,30)
@@ -62,10 +62,10 @@ def show_start_end_level1(df,flag,snid=1):
     return f,(ax1,ax2)
 
 #level2
-def show_start_end_level2(df):
+def show_start_end_level2(df,msize=1):
     f,(ax1,ax2)=plt.subplots(2,1)
-    ax1.scatter(df['X1 (mm)'], df['Y1 (mm)'], label = 'start',s=1)
-    ax2.scatter(df['X2 (mm)'], df['Y2 (mm)'], label = 'end',s=1)
+    ax1.scatter(df['X1 (mm)'], df['Y1 (mm)'], label = 'start',markersize=msize)
+    ax2.scatter(df['X2 (mm)'], df['Y2 (mm)'], label = 'end',markersize=msize)
     ax1.legend()
     ax2.legend()
     aux.draw_rectangle(ax1,90,30)
@@ -81,21 +81,24 @@ def show_start_end_level2(df):
 import matplotlib.dates as mdates
 from datetime import timedelta
 
+#H should be in sorted order
 def get_flux(H):
     ht = np.histogram(H,np.arange(H[0],np.array(H)[-1],60))
     return ht[1][1:],ht[0]
 
 #show parameters and counts
-def show_para_count(r,d,d4,d8,flag,gap=10):
+def show_para_count(r,d,d4,d8,flag,gap=10,msize=1):
+    #rdate = pd.to_datetime(r.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
+    #ddate = pd.to_datetime(d.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     rdate = pd.to_datetime(r.iloc[:, 0])
     ddate = pd.to_datetime(d.iloc[:, 0])
 
     if flag == 'A':
         fig, ax = plt.subplots(5,1,sharex=True)
-        ax[0].plot(rdate[::gap], r['HV_MCP1'][::gap],'.'s=1)
-        ax[1].plot(rdate[::gap], r['MCP1'][::gap],'.'s=1)
-        ax[2].plot(rdate[::gap], r['AX'][::gap],'.',s=1,label = 'AX')
-        ax[2].plot(rdate[::gap], r['AY'][::gap],'.',s=1,label = 'AY')
+        ax[0].plot(rdate[::gap], r['HV_MCP1'][::gap],'.',markersize=msize)
+        ax[1].plot(rdate[::gap], r['MCP1'][::gap],'.',markersize=msize)
+        ax[2].plot(rdate[::gap], r['AX'][::gap],'.',markersize=msize,label = 'AX')
+        ax[2].plot(rdate[::gap], r['AY'][::gap],'.',markersize=msize,label = 'AY')
         ax[2].legend()
         ax[3].plot(rdate[::gap], r['TA'][::gap],'.')
         for ai in range(4):
@@ -112,15 +115,15 @@ def show_para_count(r,d,d4,d8,flag,gap=10):
         ax[3].set_ylabel('TEMP')
     elif flag == 'B':
         fig, ax = plt.subplots(5,1,sharex=True)
-        ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],'.',s=1)
-        ax[1].plot(rdate[::gap], r['MCP2'][::gap],'.',s=1)
-        ax[2].plot(rdate[::gap], r['BX1'][::gap],'.',s=1,label = 'BX1')
-        ax[2].plot(rdate[::gap], r['BY1'][::gap],'.',s=1,label = 'BY1')
-        ax[2].plot(rdate[::gap], r['BX2'][::gap],'.',s=1,label = 'BX2')
-        ax[2].plot(rdate[::gap], r['BY2'][::gap],'.',s=1,label = 'BY2')
-        ax[2].plot(rdate[::gap], r['BG'][::gap],'.',s=1,label = 'BG')
+        ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],'.',markersize=msize)
+        ax[1].plot(rdate[::gap], r['MCP2'][::gap],'.',markersize=msize)
+        ax[2].plot(rdate[::gap], r['BX1'][::gap],'.',markersize=msize,label = 'BX1')
+        ax[2].plot(rdate[::gap], r['BY1'][::gap],'.',markersize=msize,label = 'BY1')
+        ax[2].plot(rdate[::gap], r['BX2'][::gap],'.',markersize=msize,label = 'BX2')
+        ax[2].plot(rdate[::gap], r['BY2'][::gap],'.',markersize=msize,label = 'BY2')
+        ax[2].plot(rdate[::gap], r['BG'][::gap],'.',markersize=msize,label = 'BG')
         ax[2].legend()
-        ax[3].plot(rdate[::gap], r['TB'][::gap],'.',s=1)
+        ax[3].plot(rdate[::gap], r['TB'][::gap],'.',markersize=msize)
         for ai in range(4):
             ax[ai].set_xticklabels([])
         #selected_indices = np.arange(0, len(r), int(len(r)/numtick))
@@ -134,21 +137,23 @@ def show_para_count(r,d,d4,d8,flag,gap=10):
         ax[3].set_ylabel('TEMP')
     else:
         print('name not correct')
+        exit(1)
     t,c = get_flux(np.array(d['Timestamp']))
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, '',s=1, label = 'Any')
+    ax[-1].plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'Any')
     
     t,c = get_flux(np.array(d4['Timestamp']))
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, '.',s=1, label = 'Start')
+    ax[-1].plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'S4')
     
     t,c = get_flux(np.array(d8['Timestamp']))
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, '-',s=1, label = 'ALL')
+    ax[-1].plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'ALL')
     ax[-1].legend()
     date_format = mdates.DateFormatter('%Y-%m-%d %H:%M')
     ax[-1].xaxis.set_major_formatter(date_format)
     ax[-1].set_ylabel('Counts/Min')
+    ax[-1].set_yscale('log')
     fig.autofmt_xdate()
     return fig,ax
 
