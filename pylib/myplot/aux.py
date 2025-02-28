@@ -18,6 +18,6 @@ def openfig(fname):
     return loaded_fig
 
 def savefig(fname,fig):
-    with open(name, 'wb') as f:
+    with open(fname, 'wb') as f:
         pickle.dump(fig, f)
     return 0
