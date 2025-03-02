@@ -22,7 +22,7 @@ def ratio_levels(df,prob='A',snid=1):
     len5,_  = flt.onboard_eff(df4)
     return len1,len2,len3,len4,len5
 
-
+#quick
 #plot from level 1
 def show_start_end_level1(df,flag,snid=1,msize=1):
     phy.init_param(snid)
@@ -156,6 +156,76 @@ def show_para_count(r,d,d4,d8,flag,gap=10,msize=1):
     ax[-1].set_yscale('log')
     fig.autofmt_xdate()
     return fig,ax
+
+
+def show_paras(fig,ax,r,flag,gap=10,msize=1):
+    #rdate = pd.to_datetime(r.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
+    #ddate = pd.to_datetime(d.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
+    rdate = pd.to_datetime(r.iloc[:, 0])
+    if flag == 'A':
+        ax[0].plot(rdate[::gap], r['HV_MCP1'][::gap],'.',markersize=msize)
+        ax[1].plot(rdate[::gap], r['MCP1'][::gap],'.',markersize=msize)
+        ax[2].plot(rdate[::gap], r['AX'][::gap],'.',markersize=msize,label = 'AX')
+        ax[2].plot(rdate[::gap], r['AY'][::gap],'.',markersize=msize,label = 'AY')
+        ax[2].legend()
+        ax[3].plot(rdate[::gap], r['TA'][::gap],'.')
+        for ai in range(4):
+            ax[ai].set_xticklabels([])
+            #ax[ai].set_xticks([])
+        #selected_indices = np.arange(0, len(r), int(len(r)/numtick))
+        #ax[4].set_xticks(r['Date'][selected_indices])
+        ax[0].set_ylabel('HV')
+        ax[0].axhline(-2800,color='r')
+        ax[1].set_ylabel('MCP' )
+        ax[1].set_ylim(0,800)
+        ax[2].set_ylabel('THE')
+        ax[2].set_ylim(0,800)
+        ax[3].set_ylabel('TEMP')
+    elif flag == 'B':
+        fig, ax = plt.subplots(5,1,sharex=True)
+        ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],'.',markersize=msize)
+        ax[1].plot(rdate[::gap], r['MCP2'][::gap],'.',markersize=msize)
+        ax[2].plot(rdate[::gap], r['BX1'][::gap],'.',markersize=msize,label = 'BX1')
+        ax[2].plot(rdate[::gap], r['BY1'][::gap],'.',markersize=msize,label = 'BY1')
+        ax[2].plot(rdate[::gap], r['BX2'][::gap],'.',markersize=msize,label = 'BX2')
+        ax[2].plot(rdate[::gap], r['BY2'][::gap],'.',markersize=msize,label = 'BY2')
+        ax[2].plot(rdate[::gap], r['BG'][::gap],'.',markersize=msize,label = 'BG')
+        ax[2].legend()
+        ax[3].plot(rdate[::gap], r['TB'][::gap],'.',markersize=msize)
+        for ai in range(4):
+            ax[ai].set_xticklabels([])
+        #selected_indices = np.arange(0, len(r), int(len(r)/numtick))
+        #ax[4].set_xticks(r['Date'][selected_indices])
+        ax[0].set_ylabel('HV')
+        ax[0].axhline(-2800,color='r')
+        ax[1].set_ylabel('MCP')
+        ax[1].set_ylim(0,800)
+        ax[2].set_ylabel('THE')
+        ax[2].set_ylim(0,800)
+        ax[3].set_ylabel('TEMP')
+    else:
+        print('name not correct')
+        exit(1)
+    
+    fig.autofmt_xdate()
+    return 0
+
+
+def show_counts(fig,ax,d,d4,d8,flag,gap=10,msize=1):
+    ddate = pd.to_datetime(d.iloc[:, 0])
+    t,c = get_flux(np.array(d['Timestamp']))
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax.plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'Any')
+    
+    t,c = get_flux(np.array(d4['Timestamp']))
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax.plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'S4')
+    
+    t,c = get_flux(np.array(d8['Timestamp']))
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax.plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'ALL')
+    ax.legend()
+    return 0
 
 # ================================ statistic ================================
 def channel_count_rate(df,c):
