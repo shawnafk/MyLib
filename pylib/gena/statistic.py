@@ -163,10 +163,8 @@ def show_paras(fig,ax,r,flag,gap=10,msize=1):
         ax[1].plot(rdate[::gap], r['MCP1'][::gap],'.',markersize=msize)
         ax[2].plot(rdate[::gap], r['AX'][::gap],'.',markersize=msize,label = 'AX')
         ax[2].plot(rdate[::gap], r['AY'][::gap],'.',markersize=msize,label = 'AY')
-        ax[2].legend()
         ax[3].plot(rdate[::gap], r['TA'][::gap],'.')
     elif flag == 'B':
-        fig, ax = plt.subplots(5,1,sharex=True)
         ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],'.',markersize=msize)
         ax[1].plot(rdate[::gap], r['MCP2'][::gap],'.',markersize=msize)
         ax[2].plot(rdate[::gap], r['BX1'][::gap],'.',markersize=msize,label = 'BX1')
@@ -174,10 +172,7 @@ def show_paras(fig,ax,r,flag,gap=10,msize=1):
         ax[2].plot(rdate[::gap], r['BX2'][::gap],'.',markersize=msize,label = 'BX2')
         ax[2].plot(rdate[::gap], r['BY2'][::gap],'.',markersize=msize,label = 'BY2')
         ax[2].plot(rdate[::gap], r['BG'][::gap],'.',markersize=msize,label = 'BG')
-        ax[2].legend()
         ax[3].plot(rdate[::gap], r['TB'][::gap],'.',markersize=msize)
-        for ai in range(4):
-            ax[ai].set_xticklabels([])
     else:
         print('name not correct')
         exit(1)
@@ -186,13 +181,16 @@ def show_paras(fig,ax,r,flag,gap=10,msize=1):
     ax[0].axhline(-2900,color='r')
     ax[0].axhline(-2800,color='r')
     ax[0].axhline(-2700,color='r')
-    ax[0].set_ylim(-2600,-3100)
+    ax[0].set_ylim(-3100,-2600)
     ax[1].set_ylabel('MCP' )
     ax[1].set_ylim(150,700)
     ax[2].set_ylabel('THE')
+    ax[2].legend()
     ax[2].set_ylim(150,700)
     ax[3].set_ylabel('TEMP')
     fig.autofmt_xdate()
+    #for _ in ax:
+    #    _.set_xticklabels([])
     return 0
 
 
@@ -215,7 +213,7 @@ def show_counts(fig,ax,d,d4,d8,flag,gap=10,msize=1):
     return 0
 
 # ================================ statistic ================================
-def channel_count_rate(df,c):
+def channel_count_ratio(df,c):
     if c == 'X1':
         count = ((df['X1_start (ns)'] != 0) | (df['X1_end (ns)'])).sum()
     if c == 'X2':
@@ -226,12 +224,12 @@ def channel_count_rate(df,c):
         count = ((df['Y2_start (ns)'] != 0) | (df['Y2_end (ns)'])).sum()
     return count     
 
-def channel_count_rate4(df):
+def channel_count_ratio4(df):
     count_0 = ((df['X1_start (ns)'] == 0) & (df['X2_start (ns)'] == 0) & (df['Y1_start (ns)'] == 0) & (df['Y2_start (ns)'] == 0) & (df['X1_end (ns)'] == 0) & (df['X2_end (ns)'] == 0) & (df['Y1_end (ns)'] == 0) & (df['Y2_end (ns)'] == 0)).sum()
     count = ((df['X1_start (ns)'] != 0) & (df['X2_start (ns)'] != 0) & (df['Y1_start (ns)'] != 0) & (df['Y2_start (ns)'] != 0)).sum()
     print(count_0,len(df))
     return count
-def channel_count_rate8(df):
+def channel_count_ratio8(df):
     count = ((df['X1_start (ns)'] != 0) & (df['X2_start (ns)'] != 0) & (df['Y1_start (ns)'] != 0) & (df['Y2_start (ns)'] != 0) & (df['X1_end (ns)'] != 0) & (df['X2_end (ns)'] != 0) & (df['Y1_end (ns)'] != 0) & (df['Y2_end (ns)'] != 0)).sum()
     return count 
 
@@ -300,7 +298,88 @@ def show_start_bar(df, prob, folder,ssid=1):
             f.savefig(folder + cnl)
 
 
-def show_1c_bar(df, prob, folder,ssid=1):
+def show_8_dist(df, prob, folder,ssid):
+    phy.init_param(ssid)
+    if prob == 'a':
+        xlim = phy.A_NS_XLIM
+        ylim = phy.A_NS_YLIM
+    if prob == 'b':
+        xlim = phy.B_NS_XLIM
+        ylim = phy.B_NS_YLIM
+    ybins = [1, ylim, ylim + 40, ylim + 40 *2, ylim + 40 * 3, ylim + 40 * 4, ylim + 40 * 5, ylim + 40 * 6, ylim + 40 * 7, ylim + 40 * 8, 9999]
+    ylabels = [str(int(y1)) + '-' + str(int(y2)) for y1,y2 in zip(ybins[:-1],ybins[1:])]
+    xbins = [1, xlim, xlim + 50, xlim + 50 *2, xlim + 50 * 3, xlim + 50 * 4, xlim + 50 * 5, xlim + 50 * 6, xlim + 50 * 7, xlim + 50 * 8, 9999]
+    xlabels = [str(int(x1)) + '-' + str(int(x2)) for x1,x2 in zip(xbins[:-1],xbins[1:])]
+    for i,cnl in enumerate(['X1_start (ns)', 'X2_start (ns)', 'X1_end (ns)', 'X2_end (ns)', 'Y1_start (ns)', 'Y2_start (ns)','Y1_end (ns)', 'Y2_end (ns)']):
+        series = df[cnl]
+        #zero_count = (series == -94*0.081).sum()
+        #zero_count = (series == 0).sum()
+        #filtered_series = series[series > 0]
+        if i < 4:
+            bins = xbins
+            labels = xlabels
+        else:
+            bins = ybins
+            labels = ylabels
+        cut_data = pd.cut(series, bins=bins, labels=labels, right=False)
+        interval_counts = cut_data.value_counts()
+        # 重新索引，确保按照分箱顺序排列
+        interval_counts = interval_counts.reindex(labels, fill_value=0)
+        #all_counts = pd.concat([pd.Series({'0': zero_count}), interval_counts])
+        all_counts = interval_counts
+        total_count = all_counts.sum()
+        all_percentages = all_counts / total_count * 100
+
+        f, ax = plt.subplots()
+        # 绘制条形图
+        #ars = ax.barh(all_counts.values,all_counts.index)
+        bars = ax.barh(all_counts.index,all_counts.values)
+        
+        ymin, ymax = ax.get_ylim()
+        y_range = ymax - ymin
+
+        # 在每个条形的横向上添加百分比和计数标签
+        for bar, (index, value) in zip(bars, all_counts.items()):
+            # 获取条形的 y 坐标
+            y_coord = bar.get_y() + bar.get_height() / 2
+            # 计算归一化的 y 坐标
+            normalized_y = (y_coord - ymin) / y_range
+            # 添加计数标签
+            ax.text(0.3, normalized_y, f'{value}', ha='left', va='center', transform=ax.transAxes)
+            # 获取对应的百分比
+            percentage = all_percentages[index]
+            # 添加百分比标签
+            ax.text(0.5, normalized_y, f'{percentage:.2f}%', ha='left', va='center', transform=ax.transAxes)
+            ax.set_ylabel('Value Intervals')
+            ax.set_xlabel('Count')
+            ax.set_title(cnl)
+            fig_w = 3.375
+            f.set_size_inches(fig_w * 4, fig_w)
+            f.savefig(folder + cnl)
+
+def show_match_dist(df,folder='./',gap=10):
+    sumx = df['X1_start (ns)'] +  df['X2_start (ns)']
+    sumy = df['Y1_start (ns)'] +  df['Y2_start (ns)']
+    ratiox, barx = np.histogram(sumx,np.arange(0,np.max(sumx),gap),density=True)
+    f, ax = plt.subplots(2,1)
+    ax[0].bar(barx[:-1],ratiox,gap)
+    ax[0].axvline(45,color='r')
+    ax[0].axvline(55,color='r')
+    ax[0].set_ylabel('Sum X dist')
+    ax[0].set_xlim(0,600)
+    ax[0].set_ylabel('Sum X dist')
+    ratioy, bary = np.histogram(sumx,np.arange(0,np.max(sumy),gap),density=True)
+    ax[1].axvline(35,color='r')
+    ax[1].axvline(45,color='r')
+    ax[1].bar(bary[:-1],ratioy,gap)
+    ax[1].set_xlabel('Sum (ns)')
+    ax[1].set_ylabel('Sum Y dist')
+    ax[1].set_xlim(0,600)
+    fig_w = 3.375
+    f.set_size_inches(fig_w * 4, fig_w*2)
+    f.savefig(folder + 'match')
+
+def show_4_dist(df, prob, folder,ssid=1):
     if prob == 'a':
         xlim = phy.A_NS_XLIM
         ylim = phy.A_NS_YLIM
@@ -356,7 +435,6 @@ def show_1c_bar(df, prob, folder,ssid=1):
             fig_w = 3.375
             f.set_size_inches(fig_w * 4, fig_w / 4 * 3)
             f.savefig(folder + cnl)
-
 
 
 if __name__ == '__main__':
