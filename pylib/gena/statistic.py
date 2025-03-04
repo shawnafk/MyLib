@@ -82,12 +82,14 @@ import matplotlib.dates as mdates
 from datetime import timedelta
 
 #H should be in sorted order
-def get_flux(H):
-    ht = np.histogram(H,np.arange(H[0],np.array(H)[-1],60))
-    return ht[1][1:],ht[0]
-
+def get_flux(H,t1,t2):
+    if len(H) != 0:
+        ht = np.histogram(H,np.arange(H[0],np.array(H)[-1],60))
+        return ht[1][1:],ht[0]
+    else:
+        return np.array([t1,t2]),np.array([0,0])
 #show parameters and counts
-def show_para_count(r,d,d4,d8,flag,gap=10,msize=1):
+def show_para_count(r,d,d4,d8,flag,mk='.',gap=10,msize=1):
     #rdate = pd.to_datetime(r.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     #ddate = pd.to_datetime(d.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     rdate = pd.to_datetime(r.iloc[:, 0])
@@ -95,12 +97,12 @@ def show_para_count(r,d,d4,d8,flag,gap=10,msize=1):
 
     fig, ax = plt.subplots(5,1,sharex=True)
     if flag == 'A':
-        ax[0].plot(rdate[::gap], r['HV_MCP1'][::gap],'.',markersize=msize)
-        ax[1].plot(rdate[::gap], r['MCP1'][::gap],'.',markersize=msize)
-        ax[2].plot(rdate[::gap], r['AX'][::gap],'.',markersize=msize,label = 'AX')
-        ax[2].plot(rdate[::gap], r['AY'][::gap],'.',markersize=msize,label = 'AY')
+        ax[0].plot(rdate[::gap], r['HV_MCP1'][::gap],marker=mk,markersize=msize)
+        ax[1].plot(rdate[::gap], r['MCP1'][::gap],marker=mk,markersize=msize)
+        ax[2].plot(rdate[::gap], r['AX'][::gap],marker=mk,markersize=msize,label = 'AX')
+        ax[2].plot(rdate[::gap], r['AY'][::gap],marker=mk,markersize=msize,label = 'AY')
         ax[2].legend()
-        ax[3].plot(rdate[::gap], r['TA'][::gap],'.')
+        ax[3].plot(rdate[::gap], r['TA'][::gap],marker=mk)
         for ai in range(4):
             ax[ai].set_xticklabels([])
             #ax[ai].set_xticks([])
@@ -108,15 +110,15 @@ def show_para_count(r,d,d4,d8,flag,gap=10,msize=1):
         #ax[4].set_xticks(r['Date'][selected_indices])
     elif flag == 'B':
         fig, ax = plt.subplots(5,1,sharex=True)
-        ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],'.',markersize=msize)
-        ax[1].plot(rdate[::gap], r['MCP2'][::gap],'.',markersize=msize)
-        ax[2].plot(rdate[::gap], r['BX1'][::gap],'.',markersize=msize,label = 'BX1')
-        ax[2].plot(rdate[::gap], r['BY1'][::gap],'.',markersize=msize,label = 'BY1')
-        ax[2].plot(rdate[::gap], r['BX2'][::gap],'.',markersize=msize,label = 'BX2')
-        ax[2].plot(rdate[::gap], r['BY2'][::gap],'.',markersize=msize,label = 'BY2')
-        ax[2].plot(rdate[::gap], r['BG'][::gap],'.',markersize=msize,label = 'BG')
+        ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],marker=mk,markersize=msize)
+        ax[1].plot(rdate[::gap], r['MCP2'][::gap],marker=mk,markersize=msize)
+        ax[2].plot(rdate[::gap], r['BX1'][::gap],marker=mk,markersize=msize,label = 'BX1')
+        ax[2].plot(rdate[::gap], r['BY1'][::gap],marker=mk,markersize=msize,label = 'BY1')
+        ax[2].plot(rdate[::gap], r['BX2'][::gap],marker=mk,markersize=msize,label = 'BX2')
+        ax[2].plot(rdate[::gap], r['BY2'][::gap],marker=mk,markersize=msize,label = 'BY2')
+        ax[2].plot(rdate[::gap], r['BG'][::gap],marker=mk,markersize=msize,label = 'BG')
         ax[2].legend()
-        ax[3].plot(rdate[::gap], r['TB'][::gap],'.',markersize=msize)
+        ax[3].plot(rdate[::gap], r['TB'][::gap],marker=mk,markersize=msize)
         for ai in range(4):
             ax[ai].set_xticklabels([])
         #selected_indices = np.arange(0, len(r), int(len(r)/numtick))
@@ -136,15 +138,15 @@ def show_para_count(r,d,d4,d8,flag,gap=10,msize=1):
 
     t,c = get_flux(np.array(d['Timestamp']))
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'Any')
+    ax[-1].plot(ddate[0]+timedelta_array, c, marker=mk,markersize=msize, label = 'Any')
     
     t,c = get_flux(np.array(d4['Timestamp']))
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'S4')
+    ax[-1].plot(ddate[0]+timedelta_array, c, marker=mk,markersize=msize, label = 'S4')
     
     t,c = get_flux(np.array(d8['Timestamp']))
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'ALL')
+    ax[-1].plot(ddate[0]+timedelta_array, c, marker=mk,markersize=msize, label = 'ALL')
     ax[-1].legend()
     date_format = mdates.DateFormatter('%Y-%m-%d %H:%M')
     ax[-1].xaxis.set_major_formatter(date_format)
@@ -154,62 +156,76 @@ def show_para_count(r,d,d4,d8,flag,gap=10,msize=1):
     return fig,ax
 
 
-def show_paras(fig,ax,r,flag,gap=10,msize=1):
+def show_paras(ax,r,flag,gap=10,mk='.',msize=0):
     #rdate = pd.to_datetime(r.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     #ddate = pd.to_datetime(d.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     rdate = pd.to_datetime(r.iloc[:, 0])
     if flag == 'A':
-        ax[0].plot(rdate[::gap], r['HV_MCP1'][::gap],'.',markersize=msize)
-        ax[1].plot(rdate[::gap], r['MCP1'][::gap],'.',markersize=msize)
-        ax[2].plot(rdate[::gap], r['AX'][::gap],'.',markersize=msize,label = 'AX')
-        ax[2].plot(rdate[::gap], r['AY'][::gap],'.',markersize=msize,label = 'AY')
-        ax[3].plot(rdate[::gap], r['TA'][::gap],'.')
+        ax[0].plot(rdate[::gap], abs(r['HV_MCP1'][::gap]),marker=mk,markersize=msize)
+        ax[1].plot(rdate[::gap], r['MCP1'][::gap],marker=mk,markersize=msize)
+        ax[2].plot(rdate[::gap], r['AX'][::gap],marker=mk,markersize=msize,label = 'AX')
+        ax[2].plot(rdate[::gap], r['AY'][::gap],marker=mk,markersize=msize,label = 'AY')
+        ax[3].plot(rdate[::gap], r['TA'][::gap],marker=mk)
     elif flag == 'B':
-        ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],'.',markersize=msize)
-        ax[1].plot(rdate[::gap], r['MCP2'][::gap],'.',markersize=msize)
-        ax[2].plot(rdate[::gap], r['BX1'][::gap],'.',markersize=msize,label = 'BX1')
-        ax[2].plot(rdate[::gap], r['BY1'][::gap],'.',markersize=msize,label = 'BY1')
-        ax[2].plot(rdate[::gap], r['BX2'][::gap],'.',markersize=msize,label = 'BX2')
-        ax[2].plot(rdate[::gap], r['BY2'][::gap],'.',markersize=msize,label = 'BY2')
-        ax[2].plot(rdate[::gap], r['BG'][::gap],'.',markersize=msize,label = 'BG')
-        ax[3].plot(rdate[::gap], r['TB'][::gap],'.',markersize=msize)
+        ax[0].plot(rdate[::gap], abs(r['HV_MCP2'][::gap]),marker=mk,markersize=msize)
+        ax[1].plot(rdate[::gap], r['MCP2'][::gap],marker=mk,markersize=msize)
+        ax[2].plot(rdate[::gap], (r['BX1'][::gap]*2+r['BG'][::gap]),marker=mk,markersize=msize,label = 'BX1')
+        ax[2].plot(rdate[::gap], (r['BY1'][::gap]*2+r['BG'][::gap]),marker=mk,markersize=msize,label = 'BY1')
+        ax[2].plot(rdate[::gap], (r['BX2'][::gap]*2+r['BG'][::gap]),marker=mk,markersize=msize,label = 'BX2')
+        ax[2].plot(rdate[::gap], (r['BY2'][::gap]*2+r['BG'][::gap]),marker=mk,markersize=msize,label = 'BY2')
+        ax[3].plot(rdate[::gap], r['TB'][::gap],marker=mk,markersize=msize)
     else:
         print('name not correct')
         exit(1)
     ax[0].set_ylabel('HV')
-    ax[0].axhline(-3000,color='r')
-    ax[0].axhline(-2900,color='r')
-    ax[0].axhline(-2800,color='r')
-    ax[0].axhline(-2700,color='r')
-    ax[0].set_ylim(-3100,-2600)
+    ax[0].set_ylim(2600,2950)
+    ax[0].set_yticks(np.linspace(2600,2950,50))
     ax[1].set_ylabel('MCP' )
     ax[1].set_ylim(150,700)
+    ax[1].set_yticks(np.linspace(150,700,50))
     ax[2].set_ylabel('THE')
     ax[2].legend()
     ax[2].set_ylim(150,700)
+    ax[2].set_yticks(np.linspace(150,700,50))
     ax[3].set_ylabel('TEMP')
-    fig.autofmt_xdate()
-    #for _ in ax:
-    #    _.set_xticklabels([])
+    for _ in ax:
+        #_.set_xticklabels([])
+        _.grid(True)
     return 0
 
 
-def show_counts(fig,ax,d,d4,d8,flag,gap=10,msize=1):
+def show_counts(ax,d,d4,d8,ns,match,onboard,msize=2):
     ddate = pd.to_datetime(d.iloc[:, 0])
-    t,c = get_flux(np.array(d['Timestamp']))
+    t,c = get_flux(np.array(d['Timestamp']),ddate.iloc[0],ddate.iloc[-1])
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'Any')
+    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'Any')
     
-    t,c = get_flux(np.array(d4['Timestamp']))
+    t,c = get_flux(np.array(d4['Timestamp']),ddate.iloc[0],ddate.iloc[-1])
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'S4')
+    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'S4')
     
-    t,c = get_flux(np.array(d8['Timestamp']))
+    t,c = get_flux(np.array(d8['Timestamp']),ddate.iloc[0],ddate.iloc[-1])
     timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '.',markersize=msize, label = 'ALL')
+    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'ALL')
     ax.legend()
-    ax.set_ylim(1,32*62*70)
-    ax.axhline(32*62*60,color='r')
+
+    t,c = get_flux(np.array(ns['Timestamp']),ddate.iloc[0],ddate[-1])
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'ALL')
+    ax.legend()
+
+    t,c = get_flux(np.array(match['Timestamp']),ddate[0],ddate.iloc[-1])
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'ALL')
+    ax.legend()
+
+    t,c = get_flux(np.array(onboard['Timestamp']),ddate[0],ddate[-1])
+    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
+    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'ALL')
+    ax.legend()
+
+    ax.set_ylim(1,16*62*70)
+    ax.axhline(16*62*60,color='r')
     return 0
 
 # ================================ statistic ================================
