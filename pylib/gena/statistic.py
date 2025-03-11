@@ -11,12 +11,12 @@ from . import physical as phy
 from . import filters as flt
 #from level 1A
 #return total
-def ratio_levels(df,prob='A',snid=1):
+def ratio_levels(df,prob='a',snid=1):
     phy.init_param(snid)
-    if prob == 'A':
+    if prob == 'a':
         xlim = phy.A_NS_XLIM
         ylim = phy.A_NS_YLIM
-    if prob == 'B':
+    if prob == 'b':
         xlim = phy.B_NS_XLIM
         ylim = phy.B_NS_YLIM
     len1,df1  = flt.start_end_eff(df)
@@ -120,14 +120,14 @@ def show_paras(ax,r,flag,gap=10,mk='',msize=0):
     #rdate = pd.to_datetime(r.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     #ddate = pd.to_datetime(d.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     rdate = pd.to_datetime(r.iloc[:, 0])
-    if flag == 'A':
+    if flag == 'a':
         ax[0].plot(rdate[::gap], abs(r['HV_MCP1'][::gap]),marker=mk,markersize=msize)
         ax[1].plot(rdate[::gap], r['MCP1'][::gap],marker=mk,markersize=msize)
         ax[2].plot(rdate[::gap], r['AX'][::gap],marker=mk,markersize=msize,label = 'AY')
         ax[2].plot(rdate[::gap], r['AY'][::gap],marker=mk,markersize=msize,label = 'AX')
         ax[3].plot(rdate[::gap], r['TA'][::gap],marker=mk)
         ax[2].legend(frameon=False, ncol=3)
-    elif flag == 'B':
+    elif flag == 'b':
         ax[0].plot(rdate[::gap], abs(r['HV_MCP2'][::gap]),marker=mk,markersize=msize)
         ax[1].plot(rdate[::gap], r['MCP2'][::gap],marker=mk,markersize=msize)
         ax[2].plot(rdate[::gap], (r['BX1'][::gap]*2+r['BG'][::gap]),marker=mk,markersize=msize,label = 'BX1')
