@@ -32,10 +32,10 @@ def start_ns_eff(df,xlim,ylim):
     len,sub_df = select_data(df,cond)
     return len,sub_df
 
-def match_eff(df):
+def match_eff(df,xl=45,xu=55,yl=35,yu=45):
     sumx =  np.array((df['X1_start (ns)'] + df['X2_start (ns)']))
     sumy =  np.array((df['Y1_start (ns)'] + df['Y2_start (ns)']))
-    cond = (sumx<55) & (sumx>45) & (sumy<45) & (sumy>35)
+    cond = (sumx<xu) & (sumx>xl) & (sumy<yu) & (sumy>yl)
     len,sub_df = select_data(df,cond)
     return len,sub_df
     

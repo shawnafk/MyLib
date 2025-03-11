@@ -1,4 +1,8 @@
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import timedelta
+from matplotlib.colors import LogNorm
+import matplotlib.ticker as ticker
 from myplot import aux
 import numpy as np
 from . import csv0
@@ -22,150 +26,107 @@ def ratio_levels(df,prob='A',snid=1):
     len5,_  = flt.onboard_eff(df4)
     return len1,len2,len3,len4,len5
 
-#quick
-#plot from level 1
-def show_start_end_level1(df,flag,snid=1,msize=1):
-    phy.init_param(snid)
-    if flag == 'a':
-        xc = phy.A_X_CENTER_NS
-        yc = phy.A_Y_CENTER_NS
-        xcoef = phy.A_X_COF
-        ycoef = phy.A_Y_COF
-    if flag == 'b':
-        xc = phy.B_X_CENTER_NS
-        yc = phy.B_Y_CENTER_NS
-        xcoef = phy.B_X_COF
-        ycoef = phy.B_Y_COF
+
+
+def show_hists_8(fig,axs,df,window='5min'):
+    # 对于 0 - 1 区间，保持线性关系
+    # 对于大于 1 的值，进行线性变换使得 10 - 20 区间和 0 - 1 区间等宽
+    # Step 1: 转换时间为datetime类型并设置索引
+    df['timestamp'] = pd.to_datetime(df['Date'])
+    df.set_index('timestamp', inplace=True)
+    
+    # 预先进行 resample 操作
+    resampled = df.resample(window)
+    
+    # 初始化存储矩阵和边缘时间
+    all_hist_matrix = []
+    time_edges = []
+    for time, _ in resampled:
+        time_edges.append(time)
+    
+    # 生成组合分箱：0-80用1ns间隔，80-600用10ns间隔
+    #value_bins = np.concatenate([
+    #    np.arange(0, 80, 1),
+    #    np.arange(80, 600, 10)
+    #])
+    value_bins = np.arange(0, 700, 1)
+    # 遍历每个时间窗口（只循环一次）
+    for value in ['X1_start (ns)','X2_start (ns)', 'Y1_start (ns)','Y2_start (ns)', 'X1_end (ns)','X2_end (ns)', 'Y1_end (ns)','Y2_end (ns)']:
+        window_hists = []
+        for _, group in resampled:
+            # 为每个特征列计算直方图
+            #return 69? by 70(bins)
+            hist, _ = np.histogram(group[value], bins=value_bins) if not group.empty else (np.zeros(len(value_bins)-1),0)
+            window_hists.append(hist)
+        all_hist_matrix.append(np.array(window_hists))
+    
+    # 转换矩阵结构 [时间窗口数, 特征数] -> [特征数, 时间窗口数]
+    
+    # 添加最后一个时间边缘
+    time_edges.append(time_edges[-1] + pd.Timedelta(window))
+    time_edges = np.array(time_edges)
+    value_edges = value_bins
+    
+    # 计算全局极值（保持颜色映射统一）
+    vmax = np.max([np.max(hist) for hist in all_hist_matrix])
+    vmin = np.min([np.min(hist) for hist in all_hist_matrix])
+    #print(vmax,vmin)
+    # 绘制每个子图（修改以下部分）
+    # 新增坐标变换函数（关键修改部分）
+    #def forward(x):
+    #    """将物理坐标映射到显示坐标"""
+    #    return np.where(x <= 80, x, (x - 80)/10 + 80)
+    
+    #def inverse(x):
+    #    """将显示坐标映射回物理坐标"""
+    #    return np.where(x <= 80, x, (x - 80)*10 + 80)
+
+    
+    for ax, hist_matrix in zip(axs, all_hist_matrix):
+        # 绘制时使用物理坐标分箱
+        mesh = ax.pcolormesh(
+            time_edges,
+            value_bins,  # 使用原始分箱边界
+            hist_matrix.T,
+            cmap='viridis',
+            shading='flat',
+            norm=LogNorm(vmin=1e-1, vmax=vmax)
+        )
         
-    f,(ax1,ax2)=plt.subplots(2,1)
-    x1 = (df['X2_start (ns)'] - df['X1_start (ns)'])
-    y1 = (df['Y2_start (ns)'] - df['Y1_start (ns)'])
-    x2 = (df['X2_end (ns)'] - df['X1_end (ns)'])
-    y2 = (df['Y2_end (ns)'] - df['Y1_end (ns)'])
-
-    x1 =  (x1 - xc) * xcoef
-    y1 =  (y1 - yc) * ycoef
-    x2 =  (x2 - xc) * xcoef
-    y2 =  (y2 - yc) * ycoef
-    ax1.scatter(x1,y1, label = 'start',markersize=msize)
-    ax2.scatter(x2,y2, label = 'end',markersize=msize)
-    ax1.legend()
-    ax2.legend()
-    aux.draw_rectangle(ax1,90,30)
-    aux.draw_rectangle(ax2,90,30)
-    aux.draw_rectangle(ax1,150,60)
-    aux.draw_rectangle(ax2,150,60)
-    ax1.set_xlabel('X (mm)')
-    ax1.set_ylabel('Y (mm)')
-    ax2.set_xlabel('X (mm)')
-    ax2.set_ylabel('Y (mm)')
-    return f,(ax1,ax2)
-
-#level2
-def show_start_end_level2(df,msize=1):
-    f,(ax1,ax2)=plt.subplots(2,1)
-    ax1.scatter(df['X1 (mm)'], df['Y1 (mm)'], label = 'start',markersize=msize)
-    ax2.scatter(df['X2 (mm)'], df['Y2 (mm)'], label = 'end',markersize=msize)
-    ax1.legend()
-    ax2.legend()
-    aux.draw_rectangle(ax1,90,30)
-    aux.draw_rectangle(ax1,150,60)
-    aux.draw_rectangle(ax2,90,30)
-    aux.draw_rectangle(ax2,150,60)
-    ax1.set_xlabel('X (mm)')
-    ax1.set_ylabel('Y (mm)')
-    ax2.set_xlabel('X (mm)')
-    ax2.set_ylabel('Y (mm)')
-    return f,(ax1,ax2)
-
-import matplotlib.dates as mdates
-from datetime import timedelta
-
-#H should be in sorted order
-def get_flux(H,t1,t2):
-    if len(H) != 0:
-        ht = np.histogram(H,np.arange(H[0],np.array(H)[-1],60))
-        return ht[1][1:],ht[0]
-    else:
-        return np.array([t1,t2]),np.array([0,0])
-#show parameters and counts
-def show_para_count(r,d,d4,d8,flag,mk='.',gap=10,msize=1):
-    #rdate = pd.to_datetime(r.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
-    #ddate = pd.to_datetime(d.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
-    rdate = pd.to_datetime(r.iloc[:, 0])
-    ddate = pd.to_datetime(d.iloc[:, 0])
-
-    fig, ax = plt.subplots(5,1,sharex=True)
-    if flag == 'A':
-        ax[0].plot(rdate[::gap], r['HV_MCP1'][::gap],marker=mk,markersize=msize)
-        ax[1].plot(rdate[::gap], r['MCP1'][::gap],marker=mk,markersize=msize)
-        ax[2].plot(rdate[::gap], r['AX'][::gap],marker=mk,markersize=msize,label = 'AX')
-        ax[2].plot(rdate[::gap], r['AY'][::gap],marker=mk,markersize=msize,label = 'AY')
-        ax[2].legend()
-        ax[3].plot(rdate[::gap], r['TA'][::gap],marker=mk)
-        for ai in range(4):
-            ax[ai].set_xticklabels([])
-            #ax[ai].set_xticks([])
-        #selected_indices = np.arange(0, len(r), int(len(r)/numtick))
-        #ax[4].set_xticks(r['Date'][selected_indices])
-    elif flag == 'B':
-        fig, ax = plt.subplots(5,1,sharex=True)
-        ax[0].plot(rdate[::gap], r['HV_MCP2'][::gap],marker=mk,markersize=msize)
-        ax[1].plot(rdate[::gap], r['MCP2'][::gap],marker=mk,markersize=msize)
-        ax[2].plot(rdate[::gap], r['BX1'][::gap],marker=mk,markersize=msize,label = 'BX1')
-        ax[2].plot(rdate[::gap], r['BY1'][::gap],marker=mk,markersize=msize,label = 'BY1')
-        ax[2].plot(rdate[::gap], r['BX2'][::gap],marker=mk,markersize=msize,label = 'BX2')
-        ax[2].plot(rdate[::gap], r['BY2'][::gap],marker=mk,markersize=msize,label = 'BY2')
-        ax[2].plot(rdate[::gap], r['BG'][::gap],marker=mk,markersize=msize,label = 'BG')
-        ax[2].legend()
-        ax[3].plot(rdate[::gap], r['TB'][::gap],marker=mk,markersize=msize)
-        for ai in range(4):
-            ax[ai].set_xticklabels([])
-        #selected_indices = np.arange(0, len(r), int(len(r)/numtick))
-        #ax[4].set_xticks(r['Date'][selected_indices])
-    else:
-        print('name not correct')
-        exit(1)
-    ax[0].set_ylabel('HV')
-    ax[0].axhline(-2800,color='r')
-    ax[0].axhline(-2700,color='r')
-    ax[0].set_ylim(-2600,3100)
-    ax[1].set_ylabel('MCP' )
-    ax[1].set_ylim(150,700)
-    ax[2].set_ylabel('THE')
-    ax[2].set_ylim(150,700)
-    ax[3].set_ylabel('TEMP')
-
-    t,c = get_flux(np.array(d['Timestamp']))
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, marker=mk,markersize=msize, label = 'Any')
+        # 设置双刻度（关键视觉效果）
+        #ax.yaxis.set_major_locator(ticker.FixedLocator([0, 20, 40, 60, 80, 200, 400, 600]))
+        #ax.yaxis.set_major_formatter(ticker.FuncFormatter(
+        #    lambda x, pos: f'{inverse(x):.0f}' if x > 80 else f'{x:.0f}'
+        #))
     
-    t,c = get_flux(np.array(d4['Timestamp']))
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, marker=mk,markersize=msize, label = 'S4')
-    
-    t,c = get_flux(np.array(d8['Timestamp']))
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax[-1].plot(ddate[0]+timedelta_array, c, marker=mk,markersize=msize, label = 'ALL')
-    ax[-1].legend()
-    date_format = mdates.DateFormatter('%Y-%m-%d %H:%M')
-    ax[-1].xaxis.set_major_formatter(date_format)
-    ax[-1].set_ylabel('Counts/Min')
-    ax[-1].set_yscale('log')
-    fig.autofmt_xdate()
-    return fig,ax
+        # 设置自定义缩放
+        #scale = FuncScale(ax, functions=(forward, inverse))
+        #ax.set_yscale(scale)
+    # 设置 colorbar 位置和 aspect
+    ax_pos = axs[0].get_position()
+    ax_width = ax_pos.x1 - ax_pos.x0
+    ax_height = ax_pos.y1 - ax_pos.y0
+    fraction = 0.25
+    aspect = ax_width / (ax_height * fraction)
+
+    # 创建 colorbar 并设置 aspect
+    cbar = fig.colorbar(mesh, ax=axs[0], orientation='horizontal', location='top',
+                    fraction=fraction, pad=0.01, aspect=aspect)
+    cbar.ax.set_ylabel('counts', rotation=0, labelpad=40)
+    cbar.formatter = ticker.LogFormatter()  # 明确指定对数格式
 
 
-def show_paras(ax,r,flag,gap=10,mk='.',msize=0):
+def show_paras(ax,r,flag,gap=10,mk='',msize=0):
     #rdate = pd.to_datetime(r.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     #ddate = pd.to_datetime(d.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
     rdate = pd.to_datetime(r.iloc[:, 0])
     if flag == 'A':
         ax[0].plot(rdate[::gap], abs(r['HV_MCP1'][::gap]),marker=mk,markersize=msize)
         ax[1].plot(rdate[::gap], r['MCP1'][::gap],marker=mk,markersize=msize)
-        ax[2].plot(rdate[::gap], r['AX'][::gap],marker=mk,markersize=msize,label = 'AX')
-        ax[2].plot(rdate[::gap], r['AY'][::gap],marker=mk,markersize=msize,label = 'AY')
+        ax[2].plot(rdate[::gap], r['AX'][::gap],marker=mk,markersize=msize,label = 'AY')
+        ax[2].plot(rdate[::gap], r['AY'][::gap],marker=mk,markersize=msize,label = 'AX')
         ax[3].plot(rdate[::gap], r['TA'][::gap],marker=mk)
+        ax[2].legend(frameon=False, ncol=3)
     elif flag == 'B':
         ax[0].plot(rdate[::gap], abs(r['HV_MCP2'][::gap]),marker=mk,markersize=msize)
         ax[1].plot(rdate[::gap], r['MCP2'][::gap],marker=mk,markersize=msize)
@@ -174,58 +135,44 @@ def show_paras(ax,r,flag,gap=10,mk='.',msize=0):
         ax[2].plot(rdate[::gap], (r['BX2'][::gap]*2+r['BG'][::gap]),marker=mk,markersize=msize,label = 'BX2')
         ax[2].plot(rdate[::gap], (r['BY2'][::gap]*2+r['BG'][::gap]),marker=mk,markersize=msize,label = 'BY2')
         ax[3].plot(rdate[::gap], r['TB'][::gap],marker=mk,markersize=msize)
+        ax[2].legend(frameon=False, ncol=3)
     else:
         print('name not correct')
         exit(1)
-    ax[0].set_ylabel('HV')
-    ax[0].set_ylim(2600,2950)
-    ax[0].set_yticks(np.linspace(2600,2950,50))
-    ax[1].set_ylabel('MCP' )
-    ax[1].set_ylim(150,700)
-    ax[1].set_yticks(np.linspace(150,700,50))
-    ax[2].set_ylabel('THE')
-    ax[2].legend()
-    ax[2].set_ylim(150,700)
-    ax[2].set_yticks(np.linspace(150,700,50))
-    ax[3].set_ylabel('TEMP')
-    for _ in ax:
-        #_.set_xticklabels([])
-        _.grid(True)
     return 0
 
+#H should be in sorted order
+def get_flux(H,t1,t2):
+    if len(H) != 0:
+        #ht = np.histogram(H,np.arange(H[0],np.array(H)[-1],60))
+        ht = np.histogram(H-H[0],np.arange(t1,t2,60))
+        return ht[1][1:],ht[0]
+    else:
+        return np.arange(t1,t2,60)[1:],np.arange(t1,t2,60)[1:]*0
 
-def show_counts(ax,d,d4,d8,ns,match,onboard,msize=2):
+def counts(ax,flux_t,ddate,tsecs,**keyargs):
+    t,c = get_flux(flux_t,0,tsecs)
+    timedelta_array = np.array([timedelta(seconds=int(val)) for val in t])
+    ax.plot(ddate.iloc[0]+timedelta_array, c, '-', **keyargs)
+    return ddate.iloc[0]+timedelta_array,c
+def show_counts(ax,axr,d,d4,d8,ns,match,onboard,msize=2):
     ddate = pd.to_datetime(d.iloc[:, 0])
-    t,c = get_flux(np.array(d['Timestamp']),ddate.iloc[0],ddate.iloc[-1])
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'Any')
+    tsecs = ddate.iloc[-1].timestamp()-ddate.iloc[0].timestamp()
     
-    t,c = get_flux(np.array(d4['Timestamp']),ddate.iloc[0],ddate.iloc[-1])
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'S4')
-    
-    t,c = get_flux(np.array(d8['Timestamp']),ddate.iloc[0],ddate.iloc[-1])
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'ALL')
-    ax.legend()
-
-    t,c = get_flux(np.array(ns['Timestamp']),ddate.iloc[0],ddate[-1])
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'ALL')
-    ax.legend()
-
-    t,c = get_flux(np.array(match['Timestamp']),ddate[0],ddate.iloc[-1])
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'ALL')
-    ax.legend()
-
-    t,c = get_flux(np.array(onboard['Timestamp']),ddate[0],ddate[-1])
-    timedelta_array = np.array([timedelta(seconds=int(val-t[0])) for val in t])
-    ax.plot(ddate[0]+timedelta_array, c, '-',markersize=msize, label = 'ALL')
-    ax.legend()
-
+    t,call = counts(ax,np.array(d['Timestamp']),ddate,tsecs,markersize=msize, label = 'Trigger')
+    counts(ax,np.array(d4['Timestamp']),ddate,tsecs,markersize=msize, label = 'Start')
+    _,c8 = counts(ax,np.array(d8['Timestamp']),ddate,tsecs,markersize=msize, label = 'StartEnd')
+    counts(ax,np.array(ns['Timestamp']),ddate,tsecs,markersize=msize, label = 'StartLim')
+    _,cmatch = counts(ax,np.array(match['Timestamp']),ddate,tsecs,markersize=msize, label = 'SumMatch')
+    counts(ax,np.array(match['Timestamp']),ddate,tsecs,markersize=msize, label = 'Onboard')
+    ax.legend(frameon=False, ncol=3)
     ax.set_ylim(1,16*62*70)
     ax.axhline(16*62*60,color='r')
+    
+    #question mark
+    axr.plot(t,c8/(call+0.0001),label = 'StartEnd/Trigger')
+    axr.plot(t,cmatch/(c8+0.0001), label = 'SumMatch/StartEnd')
+    axr.legend(frameon=False)
     return 0
 
 # ================================ statistic ================================
@@ -451,6 +398,70 @@ def show_4_dist(df, prob, folder,ssid=1):
             fig_w = 3.375
             f.set_size_inches(fig_w * 4, fig_w / 4 * 3)
             f.savefig(folder + cnl)
+
+
+#quick
+#plot from level 1
+def show_start_end_level1(df,flag,snid=1,msize=1,s_or_hist=1):
+    phy.init_param(snid)
+    if flag == 'a':
+        xc = phy.A_X_CENTER_NS
+        yc = phy.A_Y_CENTER_NS
+        xcoef = phy.A_X_COF
+        ycoef = phy.A_Y_COF
+    if flag == 'b':
+        xc = phy.B_X_CENTER_NS
+        yc = phy.B_Y_CENTER_NS
+        xcoef = phy.B_X_COF
+        ycoef = phy.B_Y_COF
+        
+    f,(ax1,ax2)=plt.subplots(2,1)
+    x1 = (df['X2_start (ns)'] - df['X1_start (ns)'])
+    y1 = (df['Y2_start (ns)'] - df['Y1_start (ns)'])
+    x2 = (df['X2_end (ns)'] - df['X1_end (ns)'])
+    y2 = (df['Y2_end (ns)'] - df['Y1_end (ns)'])
+
+    x1 =  (x1 - xc) * xcoef
+    y1 =  (y1 - yc) * ycoef
+    x2 =  (x2 - xc) * xcoef
+    y2 =  (y2 - yc) * ycoef
+    if s_or_hist == 0:
+        ax1.scatter(x1,y1, label = 'start',s=msize)
+        ax2.scatter(x2,y2, label = 'end',s=msize)
+        ax1.legend()
+        ax2.legend()
+    elif s_or_hist == 1:
+        hh = ax1.hist2d(x1,y1,np.arange(-100,100,10))
+        f.colorbar(hh[3], ax=ax1)
+        hh = ax2.hist2d(x2,y2,np.arange(-100,100,10))
+        f.colorbar(hh[3], ax=ax2)
+
+    aux.draw_rectangle(ax1,90,30)
+    aux.draw_rectangle(ax2,90,30)
+    aux.draw_rectangle(ax1,150,60)
+    aux.draw_rectangle(ax2,150,60)
+    ax1.set_xlabel('X (mm)')
+    ax1.set_ylabel('Y (mm)')
+    ax2.set_xlabel('X (mm)')
+    ax2.set_ylabel('Y (mm)')
+    return f,(ax1,ax2)
+
+#level2
+def show_start_end_level2(df,msize=1):
+    f,(ax1,ax2)=plt.subplots(2,1)
+    ax1.scatter(df['X1 (mm)'], df['Y1 (mm)'], label = 'start',markersize=msize)
+    ax2.scatter(df['X2 (mm)'], df['Y2 (mm)'], label = 'end',markersize=msize)
+    ax1.legend()
+    ax2.legend()
+    aux.draw_rectangle(ax1,90,30)
+    aux.draw_rectangle(ax1,150,60)
+    aux.draw_rectangle(ax2,90,30)
+    aux.draw_rectangle(ax2,150,60)
+    ax1.set_xlabel('X (mm)')
+    ax1.set_ylabel('Y (mm)')
+    ax2.set_xlabel('X (mm)')
+    ax2.set_ylabel('Y (mm)')
+    return f,(ax1,ax2)
 
 
 if __name__ == '__main__':
