@@ -113,7 +113,7 @@ def show_hists_8(fig,axs,df,window='5min'):
     cbar = fig.colorbar(mesh, ax=axs[0], orientation='horizontal', location='top',
                     fraction=fraction, pad=0.01, aspect=aspect)
     cbar.ax.set_ylabel('counts', rotation=0, labelpad=40)
-    cbar.formatter = ticker.LogFormatter()  # 明确指定对数格式
+    cbar.formatter = ticker.LogFormatterSciNotation()  # 替换原来的LogFormatter
 
 
 def show_paras(ax,r,flag,gap=10,mk='',msize=0):
