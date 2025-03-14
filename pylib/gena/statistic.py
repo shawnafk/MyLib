@@ -28,7 +28,95 @@ def ratio_levels(df,prob='a',snid=1):
 
 
 
-def show_hists_8(fig,axs,df,window='5min'):
+def show_startsum(fig,axs,df,window='1min'):
+    # 对于 0 - 1 区间，保持线性关系
+    # 对于大于 1 的值，进行线性变换使得 10 - 20 区间和 0 - 1 区间等宽
+    # Step 1: 转换时间为datetime类型并设置索引
+    df['timestamp'] = pd.to_datetime(df['Date'])
+    df.set_index('timestamp', inplace=True)
+    
+    # 预先进行 resample 操作
+    resampled = df.resample(window)
+    
+    # 初始化存储矩阵和边缘时间
+    all_hist_matrix = []
+    time_edges = []
+    for time, _ in resampled:
+        time_edges.append(time)
+    
+    # 生成组合分箱：0-80用1ns间隔，80-600用10ns间隔
+    #value_bins = np.concatenate([
+    #    np.arange(0, 80, 1),
+    #    np.arange(80, 600, 10)
+    #])
+    value_bins = np.arange(0, 1400, 1)
+    # 遍历每个时间窗口（只循环一次）
+    for (value,value_conj) in [['X1_start (ns)','X2_start (ns)'], ['Y1_start (ns)','Y2_start (ns)']]:
+        window_hists = []
+        for _, group in resampled:
+            # 为每个特征列计算直方图
+            #return 69? by 70(bins)
+            hist, _ = np.histogram(group[value] + group[value_conj], bins=value_bins) if not group.empty else (np.zeros(len(value_bins)-1),0)
+            window_hists.append(hist)
+        all_hist_matrix.append(np.array(window_hists))
+    
+    # 转换矩阵结构 [时间窗口数, 特征数] -> [特征数, 时间窗口数]
+    
+    # 添加最后一个时间边缘
+    time_edges.append(time_edges[-1] + pd.Timedelta(window))
+    time_edges = np.array(time_edges)
+    value_edges = value_bins
+    
+    # 计算全局极值（保持颜色映射统一）
+    vmax = np.max([np.max(hist) for hist in all_hist_matrix])
+    vmin = np.min([np.min(hist) for hist in all_hist_matrix])
+    #print(vmax,vmin)
+    # 绘制每个子图（修改以下部分）
+    # 新增坐标变换函数（关键修改部分）
+    #def forward(x):
+    #    """将物理坐标映射到显示坐标"""
+    #    return np.where(x <= 80, x, (x - 80)/10 + 80)
+    
+    #def inverse(x):
+    #    """将显示坐标映射回物理坐标"""
+    #    return np.where(x <= 80, x, (x - 80)*10 + 80)
+
+    
+    for ax, hist_matrix in zip(axs, all_hist_matrix):
+        # 绘制时使用物理坐标分箱
+        mesh = ax.pcolormesh(
+            time_edges,
+            value_bins,  # 使用原始分箱边界
+            hist_matrix.T,
+            cmap='viridis',
+            shading='flat',
+            norm=LogNorm(vmin=1e-1, vmax=vmax)
+        )
+        
+        # 设置双刻度（关键视觉效果）
+        #ax.yaxis.set_major_locator(ticker.FixedLocator([0, 20, 40, 60, 80, 200, 400, 600]))
+        #ax.yaxis.set_major_formatter(ticker.FuncFormatter(
+        #    lambda x, pos: f'{inverse(x):.0f}' if x > 80 else f'{x:.0f}'
+        #))
+    
+        # 设置自定义缩放
+        #scale = FuncScale(ax, functions=(forward, inverse))
+        #ax.set_yscale(scale)
+    # 设置 colorbar 位置和 aspect
+    ax_pos = axs[0].get_position()
+    ax_width = ax_pos.x1 - ax_pos.x0
+    ax_height = ax_pos.y1 - ax_pos.y0
+    fraction = 0.25
+    aspect = ax_width / (ax_height * fraction)
+
+    # 创建 colorbar 并设置 aspect
+    cbar = fig.colorbar(mesh, ax=axs[0], orientation='horizontal', location='top',
+                    fraction=fraction, pad=0.01, aspect=aspect)
+    cbar.ax.set_ylabel('counts', rotation=0, labelpad=40)
+    #cbar.ax.set_xticks([vmin,vmax])  # 替换原来的LogFormatter
+    #cbar.formatter = ticker.LogFormatterSciNotation()  # 替换原来的LogFormatter
+
+def show_hists_8(fig,axs,df,window='1min'):
     # 对于 0 - 1 区间，保持线性关系
     # 对于大于 1 的值，进行线性变换使得 10 - 20 区间和 0 - 1 区间等宽
     # Step 1: 转换时间为datetime类型并设置索引
@@ -113,7 +201,10 @@ def show_hists_8(fig,axs,df,window='5min'):
     cbar = fig.colorbar(mesh, ax=axs[0], orientation='horizontal', location='top',
                     fraction=fraction, pad=0.01, aspect=aspect)
     cbar.ax.set_ylabel('counts', rotation=0, labelpad=40)
-    cbar.formatter = ticker.LogFormatterSciNotation()  # 替换原来的LogFormatter
+    #cbar.ax.set_xticks([vmin,vmax])  # 替换原来的LogFormatter
+    #cbar.formatter = ticker.LogFormatterSciNotation()  # 替换原来的LogFormatter
+
+
 
 
 def show_paras(ax,r,flag,gap=10,mk='',msize=0):
@@ -155,7 +246,7 @@ def counts(ax,flux_t,ddate,tsecs,**keyargs):
     timedelta_array = np.array([timedelta(seconds=int(val)) for val in t])
     ax.plot(ddate.iloc[0]+timedelta_array, c, '-', **keyargs)
     return ddate.iloc[0]+timedelta_array,c
-def show_counts(ax,axr,d,d4,d8,ns,match,onboard,msize=2):
+def show_counts(ax,axr,d,d4,d8,ns,match,onboard,msize=2,vmax=16*62*70*10):
     ddate = pd.to_datetime(d.iloc[:, 0])
     tsecs = ddate.iloc[-1].timestamp()-ddate.iloc[0].timestamp()
     
@@ -166,7 +257,7 @@ def show_counts(ax,axr,d,d4,d8,ns,match,onboard,msize=2):
     _,cmatch = counts(ax,np.array(match['Timestamp']),ddate,tsecs,markersize=msize, label = 'SumMatch')
     counts(ax,np.array(match['Timestamp']),ddate,tsecs,markersize=msize, label = 'Onboard')
     ax.legend(frameon=False, ncol=3)
-    ax.set_ylim(1,16*62*70)
+    ax.set_ylim(1,vmax)
     ax.axhline(16*62*60,color='r')
     
     #question mark

@@ -2,6 +2,8 @@ import pandas as pd
 
 def df_slices_by(df,t1,t2):
     df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0])
+    t1 = pd.to_datetime(t1)
+    t2 = pd.to_datetime(t2)
     # is it correct to use & here?
     #return df[(df['TimeStamp'] > s1) & (df['TimeStamp'] < s2)]
     return df[(df.iloc[:,0] > t1) & (df.iloc[:,0] < t2)]
