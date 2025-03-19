@@ -1,29 +1,11 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime
-def dt_from_ts(ts):
-    dt = datetime.strptime("21-01-01 00:00:00", "%y-%m-%d %H:%M:%S").timestamp()
-    return  [datetime.fromtimestamp(timestamp+dt) for timestamp in ts]
-    
-def seconds_to_reference_time(target_time_str):
-    # 将字符串格式的时间转换为datetime对象
-    target_time = datetime.strptime(target_time_str, '%Y-%m-%d %H:%M:%S')
-    reference_time = datetime(2021, 1, 1, 0, 0, 0)
-    # 计算时间差
-    time_diff = target_time - reference_time
-    # 返回时间差的秒数
-    return time_diff.total_seconds()
-
-def df_slices_by(df,t1,t2,by='Satellite seconds'):
-    s1 = seconds_to_reference_time(t1)
-    s2 = seconds_to_reference_time(t2)
-    # is it correct to use & here?
-    #return df[(df['TimeStamp'] > s1) & (df['TimeStamp'] < s2)]
-    return df[(df[by] > s1) & (df[by] < s2)]
-
-def df_load(fn):
-    return  pd.read_csv(fn,encoding='gbk',header=0).iloc[:,:]
-
+# df has shape 
+def df_t1_t2(df,t1,t2):
+    s1 = pd.to_datetime(t1)
+    s2 = pd.to_datetime(t2)
+    df_date = pd.to_datetime(df['Date'])
+    return df[(df_date > s1) & (df_date < s2)]
 
 from matplotlib import pyplot as plt
 plt.rcParams.update({'font.size': 18})
