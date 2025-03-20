@@ -1,17 +1,20 @@
+import numpy as np
+import pandas as pd
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import timedelta
 from matplotlib.colors import LogNorm
 import matplotlib.ticker as ticker
+from matplotlib.dates import DateFormatter
+
 from myplot import aux
-import numpy as np
+
 from . import physical as phy
 from . import filters as flt
-from lunardate import LunarDate
-from matplotlib.dates import DateFormatter
-import pandas as pd
-from gena import df as gdf
+from . import df as gdf
 
+from lunardate import LunarDate
 
 def show_channel(df,cnl):
     series = df[cnl]
@@ -69,12 +72,11 @@ def show_channel_bar(df, channel, cnl, folder):
 #only Date and ns col is enough
 #construct it first
 #return time_edges,window_histed
-def hist_df_ns_in_window(df,value_bins= np.arange(0, 1400, 1),window='1min'):
+def hist_df_ns_in_window(df,value_bins= np.arange(0, 1400, 2),window='1min'):
     df['t_idx'] = df['Date']
     df.set_index('t_idx', inplace=True)
     resampled = df.resample(window)
     
-    all_hist_matrix = []
     time_edges = []
     for time, _ in resampled:
         time_edges.append(time)
@@ -83,7 +85,7 @@ def hist_df_ns_in_window(df,value_bins= np.arange(0, 1400, 1),window='1min'):
     for _, group in resampled:
         # 为每个特征列计算直方图
         #return 69? by 70(bins)
-        hist, _ = np.histogram(df['values'], bins=value_bins) if not group.empty else (np.zeros(len(value_bins)-1),0)
+        hist, _ = np.histogram(group['values'], bins=value_bins) if not group.empty else (np.zeros(len(value_bins)-1),0)
         window_histed.append(hist)
     
     time_edges.append(time_edges[-1] + pd.Timedelta(window))
@@ -103,13 +105,14 @@ def add_bar(mesh,ax):
     return 0
    
     
-def show_startsum(axs,df,window='1min'):
+def show_startsum(axs,df):
     all_hist_matrix = []
     
     df1 = gdf.ENA_DataFrame({'Date': df['Date'], 'values': df['X1_start (ns)'] + df['X2_start (ns)']})
     df2 = gdf.ENA_DataFrame({'Date': df['Date'], 'values': df['Y1_start (ns)'] + df['Y2_start (ns)']})
+    vb = np.arange(0,1400,2) 
     for df in [df1,df2]:
-        time_egdes, hist = hist_df_ns_in_window(df)
+        time_edges, hist = hist_df_ns_in_window(df, value_bins= vb)
         all_hist_matrix.append(np.array(hist))
     
     vmax = np.max([np.max(hist) for hist in all_hist_matrix])
@@ -118,7 +121,7 @@ def show_startsum(axs,df,window='1min'):
     for ax, hist_matrix in zip(axs, all_hist_matrix):
         mesh = ax.pcolormesh(
             time_edges,
-            value_bins, 
+            vb,
             hist_matrix.T,
             cmap='viridis',
             shading='flat',
@@ -126,111 +129,23 @@ def show_startsum(axs,df,window='1min'):
         )
     add_bar(mesh,axs[0])
     
-#def show_startsum(axs,df,window='1min'):
-#    df.set_index('Date', inplace=True)
-#    resampled = df.resample(window)
-#    
-#    all_hist_matrix = []
-#    time_edges = []
-#    for time, _ in resampled:
-#        time_edges.append(time)
-#    
-#    value_bins = np.arange(0, 1400, 1)
-#    
-#    for (value,value_conj) in [['X1_start (ns)','X2_start (ns)'], ['Y1_start (ns)','Y2_start (ns)']]:
-#        window_hists = []
-#        for _, group in resampled:
-#            # 为每个特征列计算直方图
-#            #return 69? by 70(bins)
-#            hist, _ = np.histogram(group[value] + group[value_conj], bins=value_bins) if not group.empty else (np.zeros(len(value_bins)-1),0)
-#            window_hists.append(hist)
-#        all_hist_matrix.append(np.array(window_hists))
-#    
-#    # 转换矩阵结构 [时间窗口数, 特征数] -> [特征数, 时间窗口数]
-#    
-#    # 添加最后一个时间边缘
-#    time_edges.append(time_edges[-1] + pd.Timedelta(window))
-#    time_edges = np.array(time_edges)
-#    value_edges = value_bins
-#    
-#    # 计算全局极值（保持颜色映射统一）
-#    vmax = np.max([np.max(hist) for hist in all_hist_matrix])
-#    vmin = np.min([np.min(hist) for hist in all_hist_matrix])
-#    #print(vmax,vmin)
-#    # 绘制每个子图（修改以下部分）
-#    # 新增坐标变换函数（关键修改部分）
-#    #def forward(x):
-#    #    """将物理坐标映射到显示坐标"""
-#    #    return np.where(x <= 80, x, (x - 80)/10 + 80)
-#    
-#    #def inverse(x):
-#    #    """将显示坐标映射回物理坐标"""
-#    #    return np.where(x <= 80, x, (x - 80)*10 + 80)
-#
-#    
-#    for ax, hist_matrix in zip(axs, all_hist_matrix):
-#        # 绘制时使用物理坐标分箱
-#        mesh = ax.pcolormesh(
-#            time_edges,
-#            value_bins,  # 使用原始分箱边界
-#            hist_matrix.T,
-#            cmap='viridis',
-#            shading='flat',
-#            norm=LogNorm(vmin=1e-1, vmax=vmax)
-#        )
-#        
-#        # 设置双刻度（关键视觉效果）
-#        #ax.yaxis.set_major_locator(ticker.FixedLocator([0, 20, 40, 60, 80, 200, 400, 600]))
-#        #ax.yaxis.set_major_formatter(ticker.FuncFormatter(
-#        #    lambda x, pos: f'{inverse(x):.0f}' if x > 80 else f'{x:.0f}'
-#        #))
-#    
-#        # 设置自定义缩放
-#        #scale = FuncScale(ax, functions=(forward, inverse))
-#        #ax.set_yscale(scale)
-#    # 设置 colorbar 位置和 aspect
-#    ax_pos = axs[0].get_position()
-#    ax_width = ax_pos.x1 - ax_pos.x0
-#    ax_height = ax_pos.y1 - ax_pos.y0
-#    fraction = 0.25
-#    aspect = ax_width / (ax_height * fraction)
-#
-#    # 创建 colorbar 并设置 aspect
-#    cbar = plt.colorbar(mesh, ax=axs[0], orientation='horizontal', location='top',
-#                    fraction=fraction, pad=0.01, aspect=aspect)
-#    cbar.ax.set_ylabel('counts', rotation=0, labelpad=40)
-#    #cbar.ax.set_xticks([vmin,vmax])  # 替换原来的LogFormatter
-#    #cbar.formatter = ticker.LogFormatterSciNotation()  # 替换原来的LogFormatter
-
-def show_hists_8(fig,axs,df,window='1min'):
-    # 对于 0 - 1 区间，保持线性关系
-    # 对于大于 1 的值，进行线性变换使得 10 - 20 区间和 0 - 1 区间等宽
-    # Step 1: 转换时间为datetime类型并设置索引
-    df['timestamp'] = pd.to_datetime(df['Date'])
-    df.set_index('timestamp', inplace=True)
-    
-    # 预先进行 resample 操作
+def show_startsum_old(axs,df,window='1min'):
+    df.set_index('Date', inplace=True)
     resampled = df.resample(window)
     
-    # 初始化存储矩阵和边缘时间
     all_hist_matrix = []
     time_edges = []
     for time, _ in resampled:
         time_edges.append(time)
     
-    # 生成组合分箱：0-80用1ns间隔，80-600用10ns间隔
-    #value_bins = np.concatenate([
-    #    np.arange(0, 80, 1),
-    #    np.arange(80, 600, 10)
-    #])
-    value_bins = np.arange(0, 700, 1)
-    # 遍历每个时间窗口（只循环一次）
-    for value in ['X1_start (ns)','X2_start (ns)', 'Y1_start (ns)','Y2_start (ns)', 'X1_end (ns)','X2_end (ns)', 'Y1_end (ns)','Y2_end (ns)']:
+    value_bins = np.arange(0, 1400, 1)
+    
+    for (value,value_conj) in [['X1_start (ns)','X2_start (ns)'], ['Y1_start (ns)','Y2_start (ns)']]:
         window_hists = []
         for _, group in resampled:
             # 为每个特征列计算直方图
             #return 69? by 70(bins)
-            hist, _ = np.histogram(group[value], bins=value_bins) if not group.empty else (np.zeros(len(value_bins)-1),0)
+            hist, _ = np.histogram(group[value] + group[value_conj], bins=value_bins) if not group.empty else (np.zeros(len(value_bins)-1),0)
             window_hists.append(hist)
         all_hist_matrix.append(np.array(window_hists))
     
@@ -239,11 +154,10 @@ def show_hists_8(fig,axs,df,window='1min'):
     # 添加最后一个时间边缘
     time_edges.append(time_edges[-1] + pd.Timedelta(window))
     time_edges = np.array(time_edges)
-    value_edges = value_bins
-    
+
     # 计算全局极值（保持颜色映射统一）
     vmax = np.max([np.max(hist) for hist in all_hist_matrix])
-    vmin = np.min([np.min(hist) for hist in all_hist_matrix])
+    #vmin = np.min([np.min(hist) for hist in all_hist_matrix])
     #print(vmax,vmin)
     # 绘制每个子图（修改以下部分）
     # 新增坐标变换函数（关键修改部分）
@@ -267,6 +181,52 @@ def show_hists_8(fig,axs,df,window='1min'):
             norm=LogNorm(vmin=1e-1, vmax=vmax)
         )
         
+#        # 设置双刻度（关键视觉效果）
+#        #ax.yaxis.set_major_locator(ticker.FixedLocator([0, 20, 40, 60, 80, 200, 400, 600]))
+#        #ax.yaxis.set_major_formatter(ticker.FuncFormatter(
+#        #    lambda x, pos: f'{inverse(x):.0f}' if x > 80 else f'{x:.0f}'
+#        #))
+#    
+#        # 设置自定义缩放
+#        #scale = FuncScale(ax, functions=(forward, inverse))
+#        #ax.set_yscale(scale)
+    add_bar(mesh,axs[0])
+#    #cbar.ax.set_xticks([vmin,vmax])  # 替换原来的LogFormatter
+#    #cbar.formatter = ticker.LogFormatterSciNotation()  # 替换原来的LogFormatter
+
+def show_hists_8(axs,df):
+    all_hist_matrix = []
+    vb = np.arange(0, 700, 1)
+    for name in ['X1_start (ns)','X2_start (ns)', 'Y1_start (ns)','Y2_start (ns)', 'X1_end (ns)','X2_end (ns)', 'Y1_end (ns)','Y2_end (ns)']:
+        subdf = gdf.ENA_DataFrame({'Date': df['Date'], 'values': df[name]})
+        time_edges, hist = hist_df_ns_in_window(subdf, value_bins= vb)
+        all_hist_matrix.append(np.array(hist))
+    
+    vmax = np.max([np.max(hist) for hist in all_hist_matrix])
+    #vmin = np.min([np.min(hist) for hist in all_hist_matrix])
+    #print(vmax,vmin)
+    # 绘制每个子图（修改以下部分）
+    # 新增坐标变换函数（关键修改部分）
+    #def forward(x):
+    #    """将物理坐标映射到显示坐标"""
+    #    return np.where(x <= 80, x, (x - 80)/10 + 80)
+    
+    #def inverse(x):
+    #    """将显示坐标映射回物理坐标"""
+    #    return np.where(x <= 80, x, (x - 80)*10 + 80)
+
+    
+    for ax, hist_matrix in zip(axs, all_hist_matrix):
+        # 绘制时使用物理坐标分箱
+        mesh = ax.pcolormesh(
+            time_edges,
+            vb,  # 使用原始分箱边界
+            hist_matrix.T,
+            cmap='viridis',
+            shading='flat',
+            norm=LogNorm(vmin=1e-1, vmax=vmax)
+        )
+        
         # 设置双刻度（关键视觉效果）
         #ax.yaxis.set_major_locator(ticker.FixedLocator([0, 20, 40, 60, 80, 200, 400, 600]))
         #ax.yaxis.set_major_formatter(ticker.FuncFormatter(
@@ -277,18 +237,38 @@ def show_hists_8(fig,axs,df,window='1min'):
         #scale = FuncScale(ax, functions=(forward, inverse))
         #ax.set_yscale(scale)
     # 设置 colorbar 位置和 aspect
-    ax_pos = axs[0].get_position()
-    ax_width = ax_pos.x1 - ax_pos.x0
-    ax_height = ax_pos.y1 - ax_pos.y0
-    fraction = 0.25
-    aspect = ax_width / (ax_height * fraction)
-
-    # 创建 colorbar 并设置 aspect
-    cbar = fig.colorbar(mesh, ax=axs[0], orientation='horizontal', location='top',
-                    fraction=fraction, pad=0.01, aspect=aspect)
-    cbar.ax.set_ylabel('counts', rotation=0, labelpad=40)
+    add_bar(mesh,axs[0])
     #cbar.ax.set_xticks([vmin,vmax])  # 替换原来的LogFormatter
     #cbar.formatter = ticker.LogFormatterSciNotation()  # 替换原来的LogFormatter
+    axs[0].set_ylabel('X1S (ns)')
+    axs[1].set_ylabel('X2S (ns)')
+    axs[2].set_ylabel('Y1S (ns)')
+    axs[3].set_ylabel('Y2S (ns)')
+    
+    axs[4].set_ylabel('X1E (ns)')
+    axs[5].set_ylabel('X2E (ns)')
+    axs[6].set_ylabel('Y1E (ns)')
+    axs[7].set_ylabel('Y2E (ns)')
+
+    #X start
+    for i in (0,1):
+        axs[i].axhline(50,color='r',ls='--')
+        axs[i].axhline(25,color='k',ls='-')
+    #Y start
+    for i in (2,3):
+        axs[i].axhline(40,color='r',ls='--')
+        axs[i].axhline(20,color='k',ls='-')
+    
+    #stop
+    for i in (4,5,6,7):
+        axs[i].axhline(50,color='r',ls='--')
+        axs[i].axhline(100,color='r',ls='--')
+    
+    for i in (4,5,6,7,0,1,2,3):
+        axs[i].set_yscale('log')
+        axs[i].set_ylim(0.9,700)
+
+    return 0
 
 def show_paras(ax,r,flag,gap=10,mk='',msize=0):
     #rdate = pd.to_datetime(r.iloc[:, 0],format="%Y-%m-%d %H:%M:%S.%f")
@@ -313,6 +293,20 @@ def show_paras(ax,r,flag,gap=10,mk='',msize=0):
     else:
         print('name not correct')
         exit(1)
+    ax[0].set_ylabel('Volt')
+    ax[0].set_ylim(2600,3000)
+    
+    ax[1].set_ylabel('MCP' )
+    ax[1].set_ylim(150,1000)
+    
+    ax[2].set_ylabel('Anode')
+    ax[2].set_ylim(20,700)
+    
+    #temp
+    ax[3].set_ylabel('Temp')
+    ax[3].set_ylim(5,50)
+    minor_locator = ticker.MultipleLocator(1)
+    ax[3].yaxis.set_minor_locator(minor_locator)
     return 0
 
 #We can use timestamp and hist it to get counts with in chosen bins
@@ -331,24 +325,35 @@ def counts(ax,flux_t,ddate,tsecs,**keyargs):
     ax.plot(ddate.iloc[0]+timedelta_array, c, '-', **keyargs)
     return ddate.iloc[0]+timedelta_array,c
 
-def show_counts(ax,axr,d,d4,d8,ns,match,onboard,msize=2,vmax=16*62*70*10):
+def show_counts(ax,d,d4,d8,ns,match,onboard,msize=2,vmax=16*62*70*10):
     ddate = pd.to_datetime(d.iloc[:, 0])
     tsecs = ddate.iloc[-1].timestamp()-ddate.iloc[0].timestamp()
     
-    t,call = counts(ax,np.array(d['Timestamp']),ddate,tsecs,markersize=msize, label = 'Trigger')
-    counts(ax,np.array(d4['Timestamp']),ddate,tsecs,markersize=msize, label = 'Start')
-    _,c8 = counts(ax,np.array(d8['Timestamp']),ddate,tsecs,markersize=msize, label = 'StartEnd')
-    counts(ax,np.array(ns['Timestamp']),ddate,tsecs,markersize=msize, label = 'StartLim')
-    _,cmatch = counts(ax,np.array(match['Timestamp']),ddate,tsecs,markersize=msize, label = 'SumMatch')
-    counts(ax,np.array(match['Timestamp']),ddate,tsecs,markersize=msize, label = 'Onboard')
-    ax.legend(frameon=False, ncol=3)
-    ax.set_ylim(1,vmax)
-    ax.axhline(16*62*60,color='r')
+    t,call = counts(ax[0],np.array(d['Timestamp']),ddate,tsecs,markersize=msize, label = 'Trigger')
+    
+    counts(ax[0],np.array(d4['Timestamp']),ddate,tsecs,markersize=msize, label = 'Start')
+    
+    _,c8 = counts(ax[0],np.array(d8['Timestamp']),ddate,tsecs,markersize=msize, label = 'StartEnd')
+    
+    counts(ax[0],np.array(ns['Timestamp']),ddate,tsecs,markersize=msize, label = 'StartLim')
+    
+    _,cmatch = counts(ax[0],np.array(match['Timestamp']),ddate,tsecs,markersize=msize, label = 'SumMatch')
+    
+    counts(ax[0],np.array(onboard['Timestamp']),ddate,tsecs,markersize=msize, label = 'Onboard')
+    
+    ax[0].legend(frameon=False, ncol=3)
+    ax[0].set_ylim(1,vmax)
+    ax[0].axhline(16*62*60,color='r')
     
     #question mark
-    axr.plot(t,c8/(call+0.0001),label = 'StartEnd/Trigger')
-    axr.plot(t,cmatch/(c8+0.0001), label = 'SumMatch/StartEnd')
-    axr.legend(frameon=False)
+    ax[1].plot(t,c8/(call+0.0001),label = 'StartEnd/Trigger')
+    ax[1].plot(t,cmatch/(c8+0.0001), label = 'SumMatch/StartEnd')
+    ax[1].legend(frameon=False)
+    ax[0].set_yscale('log')
+    ax[1].set_yscale('log')
+    ax[0].set_ylabel('Counts/Min')
+    ax[1].set_ylabel('Ratio')
+    ax[1].set_ylim(0.001,1)
     return 0
 
 
@@ -358,63 +363,15 @@ def show_paras_counts_hists(fig,ax,p_df,l1_df,df4,df8,ns,match,onboard,flag):
     t1 = pd.Timestamp(pd.to_datetime(p_df['Timestamp'].iloc[0], unit='s', utc=True))
     t2 = pd.Timestamp(pd.to_datetime(p_df['Timestamp'].iloc[-1], unit='s', utc=True))
     
-    sts.show_paras(ax[0:4],p_df,flag)
+    show_paras(ax[0:4],p_df,flag)
     
-    sts.show_hists_8(fig,ax[4:12],l1_df)
+    show_hists_8(ax[4:12],l1_df)
     #show_hists(fig,ax[5],l1_df,'X1_start (ns)',np.concatenate(([0,1],np.arange(10,700,10))))
     
-    sts.show_counts(ax[12],ax[13],l1_df,df4,df8,ns,match,onboard)
-    
-    ax[0].set_ylabel('Volt')
-    ax[0].set_ylim(2600,3000)
-    
-    ax[1].set_ylabel('MCP' )
-    ax[1].set_ylim(150,1000)
-    
-    ax[2].set_ylabel('Anode')
-    ax[2].set_ylim(20,700)
-    
-    #temp
-    ax[3].set_ylabel('Temp')
-    ax[3].set_ylim(5,50)
-    minor_locator = ticker.MultipleLocator(1)
-    ax[3].yaxis.set_minor_locator(minor_locator)
-    
-    ax[4].set_ylabel('X1S (ns)')
-    ax[5].set_ylabel('X2S (ns)')
-    ax[6].set_ylabel('Y1S (ns)')
-    ax[7].set_ylabel('Y2S (ns)')
-    
-    ax[8].set_ylabel('X1E (ns)')
-    ax[9].set_ylabel('X2E (ns)')
-    ax[10].set_ylabel('Y1E (ns)')
-    ax[11].set_ylabel('Y2E (ns)')
-    
-    #X start
-    for i in (5,4):
-        ax[i].axhline(50,color='r',ls='--')
-        ax[i].axhline(25,color='k',ls='-')
-    #Y start
-    for i in (6,7):
-        ax[i].axhline(40,color='r',ls='--')
-        ax[i].axhline(20,color='k',ls='-')
-    
-    #stop
-    for i in (8,9,10,11):
-        ax[i].axhline(50,color='r',ls='--')
-        ax[i].axhline(100,color='r',ls='--')
-    
-    for i in (4,5,6,7,8,9,10,11):
-        ax[i].set_yscale('log')
-        ax[i].set_ylim(0.9,700)
+    show_counts(ax[12:14],l1_df,df4,df8,ns,match,onboard)
+    #ax[0].set_xlim(t1,t2)
         
-    
-    ax[12].set_ylabel('Counts/Min')
-    ax[12].set_yscale('log')
-    ax[13].set_ylabel('Ratio')
-    ax[13].set_yscale('log')
-    ax[13].set_ylim(0.001,1)
-    ax[12].set_xlim(t1,t2)
+
     
     xdates =  pd.to_datetime(l1_df.iloc[:, 0])
     lunar_dates = []
@@ -516,6 +473,28 @@ def show_start_end_level2(df,msize=1):
     ax2.set_ylabel('Y (mm)')
     return f,(ax1,ax2)
 
+
+def show_file(prefix,flag,snid=1):
+    phy.init_param(snid)
+    height_ratios = [1] * 4 + [2] * 8 + [3] * 2
+    fig, ax = plt.subplots(14, 1, sharex='col', sharey='row', figsize=(15, 50), gridspec_kw={'height_ratios': height_ratios})
+    p_file =  prefix + "_parameter.csv"
+    l1_file = prefix + "_L1A_"+ flag + ".csv"
+    p_df = gdf.read_csv(p_file)
+    l1_df = gdf.read_csv(l1_file)
+    _, df4 = flt.start_eff(l1_df)
+    _, df8 = flt.start_stop_eff(df4)
+    if flag == 'a':
+        xlim = phy.A_NS_XLIM
+        ylim = phy.A_NS_YLIM
+    elif flag == 'b':
+        xlim = phy.B_NS_XLIM
+        ylim = phy.B_NS_YLIM
+    _, ns = flt.start_ns_eff(df8,xlim,ylim)
+    _, match = flt.match_eff(ns)
+    _, onboard = flt.match_eff(match)
+    show_paras_counts_hists(fig,ax, p_df, l1_df, df4, df8, ns, match, onboard,  flag)
+    fig.savefig(prefix +  '.jpg',dpi=300,bbox_inches='tight')
 
 if __name__ == '__main__':
     pass
