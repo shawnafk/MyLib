@@ -6,7 +6,7 @@ import matplotlib.dates as mdates
 from datetime import timedelta
 from matplotlib.colors import LogNorm
 import matplotlib.ticker as ticker
-from matplotlib.dates import DateFormatter
+#rom matplotlib.dates import DateFormatter
 
 from myplot import aux
 
@@ -410,74 +410,8 @@ def show_paras_counts_hists(fig,ax,p_df,l1_df,df4,df8,ns,match,onboard,flag):
     #fig.suptitle(flag + f'{t1_str} to {t2_str}')
 
 
-#quick
-#plot from level 1
-def show_start_end_level1(df,flag,snid=1,msize=1,s_or_hist=1):
+def show_file(prefix,fig,ax,flag,snid=1):
     phy.init_param(snid)
-    if flag == 'a':
-        xc = phy.A_X_CENTER_NS
-        yc = phy.A_Y_CENTER_NS
-        xcoef = phy.A_X_COF
-        ycoef = phy.A_Y_COF
-    if flag == 'b':
-        xc = phy.B_X_CENTER_NS
-        yc = phy.B_Y_CENTER_NS
-        xcoef = phy.B_X_COF
-        ycoef = phy.B_Y_COF
-        
-    f,(ax1,ax2)=plt.subplots(2,1)
-    x1 = (df['X2_start (ns)'] - df['X1_start (ns)'])
-    y1 = (df['Y2_start (ns)'] - df['Y1_start (ns)'])
-    x2 = (df['X2_end (ns)'] - df['X1_end (ns)'])
-    y2 = (df['Y2_end (ns)'] - df['Y1_end (ns)'])
-
-    x1 =  (x1 - xc) * xcoef
-    y1 =  (y1 - yc) * ycoef
-    x2 =  (x2 - xc) * xcoef
-    y2 =  (y2 - yc) * ycoef
-    if s_or_hist == 0:
-        ax1.scatter(x1,y1, label = 'start',s=msize)
-        ax2.scatter(x2,y2, label = 'end',s=msize)
-        ax1.legend()
-        ax2.legend()
-    elif s_or_hist == 1:
-        hh = ax1.hist2d(x1,y1,np.arange(-100,100,10))
-        f.colorbar(hh[3], ax=ax1)
-        hh = ax2.hist2d(x2,y2,np.arange(-100,100,10))
-        f.colorbar(hh[3], ax=ax2)
-
-    aux.draw_rectangle(ax1,90,30)
-    aux.draw_rectangle(ax2,90,30)
-    aux.draw_rectangle(ax1,150,60)
-    aux.draw_rectangle(ax2,150,60)
-    ax1.set_xlabel('X (mm)')
-    ax1.set_ylabel('Y (mm)')
-    ax2.set_xlabel('X (mm)')
-    ax2.set_ylabel('Y (mm)')
-    return f,(ax1,ax2)
-
-#level2
-def show_start_end_level2(df,msize=1):
-    f,(ax1,ax2)=plt.subplots(2,1)
-    ax1.scatter(df['X1 (mm)'], df['Y1 (mm)'], label = 'start',markersize=msize)
-    ax2.scatter(df['X2 (mm)'], df['Y2 (mm)'], label = 'end',markersize=msize)
-    ax1.legend()
-    ax2.legend()
-    aux.draw_rectangle(ax1,90,30)
-    aux.draw_rectangle(ax1,150,60)
-    aux.draw_rectangle(ax2,90,30)
-    aux.draw_rectangle(ax2,150,60)
-    ax1.set_xlabel('X (mm)')
-    ax1.set_ylabel('Y (mm)')
-    ax2.set_xlabel('X (mm)')
-    ax2.set_ylabel('Y (mm)')
-    return f,(ax1,ax2)
-
-
-def show_file(prefix,flag,snid=1):
-    phy.init_param(snid)
-    height_ratios = [1] * 4 + [2] * 8 + [3] * 2
-    fig, ax = plt.subplots(14, 1, sharex='col', sharey='row', figsize=(15, 50), gridspec_kw={'height_ratios': height_ratios})
     p_file =  prefix + "_parameter.csv"
     l1_file = prefix + "_L1A_"+ flag + ".csv"
     p_df = gdf.read_csv(p_file)
@@ -492,9 +426,67 @@ def show_file(prefix,flag,snid=1):
         ylim = phy.B_NS_YLIM
     _, ns = flt.start_ns_eff(df8,xlim,ylim)
     _, match = flt.match_eff(ns)
-    _, onboard = flt.match_eff(match)
+    level2_df = flt.l1_2_l2(match,flag,snid)
+    _, onboard = flt.onboard_eff(level2_df)
     show_paras_counts_hists(fig,ax, p_df, l1_df, df4, df8, ns, match, onboard,  flag)
     fig.savefig(prefix +  '.jpg',dpi=300,bbox_inches='tight')
+
+
+
+#quick
+#plot from level 1
+from scipy.stats import gaussian_kde
+def show_start_end_level2(df,msize=1,s_or_hist=1):
+    f,(ax1,ax2)=plt.subplots(2,1)
+    if s_or_hist == 0:
+        ax1.scatter(df['X1 (mm)'], df['Y1 (mm)'], label = 'start',s=msize)
+        ax2.scatter(df['X2 (mm)'], df['Y2 (mm)'], label = 'end',s=msize)
+        ax1.legend()
+        ax2.legend()
+    elif s_or_hist == 1:
+        hh = ax1.hist2d(df['X1 (mm)'], df['Y1 (mm)'],np.arange(-100,100,10))
+        f.colorbar(hh[3], ax=ax1)
+        hh = ax2.hist2d(df['X2 (mm)'], df['Y2 (mm)'],np.arange(-100,100,10))
+        f.colorbar(hh[3], ax=ax2)
+    elif s_or_hist == 2:
+        xy = np.vstack([df['X1 (mm)'], df['Y1 (mm)']])
+        z = 1-gaussian_kde(xy)(xy)
+        ax1.scatter(df['X1 (mm)'], df['Y1 (mm)'], c=z, s=1, cmap='Spectral')
+        xy = np.vstack([df['X2 (mm)'], df['Y2 (mm)']])
+        z = 1-gaussian_kde(xy)(xy)
+        ax2.scatter(df['X2 (mm)'], df['Y2 (mm)'], c=z, s=1, cmap='Spectral')
+
+    aux.draw_rectangle(ax1,90,30)
+    aux.draw_rectangle(ax2,90,30)
+    aux.draw_rectangle(ax1,150,60)
+    aux.draw_rectangle(ax2,150,60)
+    ax1.set_xlabel('X (mm)')
+    ax1.set_ylabel('Y (mm)')
+    ax2.set_xlabel('X (mm)')
+    ax2.set_ylabel('Y (mm)')
+    return f,(ax1,ax2)
+
+def show_start_end_level1(df,flag,snid=1,msize=1,s_or_hist=1):
+    df2 = flt.l1_2_l2(df,flag,snid)
+    return show_start_end_level2(df2,msize,s_or_hist)
+    
+def mid_ary(ary):
+    return (ary[:-1]+ary[1:])/2
+
+def show_angle_level2(df,dx=2.5):
+    x1,y1 = (df['X1 (mm)'], df['Y1 (mm)'])
+    x2,y2 = (df['X2 (mm)'], df['Y2 (mm)'])
+    px = np.arctan((x1-x2)/50)*180/np.pi
+    py = np.arctan((y1-y2)/50)*180/np.pi
+    f,ax=plt.subplots()
+    grid_x = np.arange(-60,60,dx)
+    grid_y = np.arange(-30,30,dx)
+    H = np.histogram2d(px,py,[grid_x,grid_y])
+    Z,X = np.meshgrid(mid_ary(grid_y),mid_ary(grid_x))
+    ax.pcolormesh(X,Z,H[0])
+    aux.draw_rectangle(ax,120,60)
+    return f,ax
+
 
 if __name__ == '__main__':
     pass
