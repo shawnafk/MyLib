@@ -513,6 +513,8 @@ from matplotlib import animation
 def cartoon2d_start(xyextent,datetimes,array,*args,**kwargs):
 	fig=plt.figure()
 	ax=plt.axes()
+    aux.draw_rectangle(ax,150,60)
+    aux.draw_rectangle(ax,90,30)
 	time = ax.annotate(0,xy=(0.2, 0.9),xycoords='figure fraction')
 	im = ax.imshow(array[0,...],aspect='auto',extent=xyextent,*args,**kwargs)
 	cbar = fig.colorbar(im)
