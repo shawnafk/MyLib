@@ -508,7 +508,7 @@ def show_angle_level2(df,dx=2.5):
 #cartoon
 
 from matplotlib import animation
-def cartoon2d_start(xyextent,time,array,*args,**kwargs):
+def cartoon2d_start(xyextent,datetimes,array,*args,**kwargs):
 	fig=plt.figure()
 	ax=plt.axes()
 	time = ax.annotate(0,xy=(0.2, 0.9),xycoords='figure fraction')
@@ -519,7 +519,7 @@ def cartoon2d_start(xyextent,time,array,*args,**kwargs):
 		im.set_array(Z)
 		im_min, im_max = np.min(Z), np.max(Z)
 		im.set_clim(im_min, im_max)
-		time.set_text(time[i])
+		time.set_text(datetimes[i])
 	anim = animation.FuncAnimation(fig, animate, *args,**kwargs)
 	return anim
 
