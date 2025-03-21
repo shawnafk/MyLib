@@ -79,8 +79,8 @@ def df_resample(df, window='1min'):
 
 #resample hists location in windows
 #level2 df
-def resample_hists(df,vx=np.arange(-75,75),vy=np.arange(-30,30),window='10min'):
-    resampled = df.resample(window)
+def hists_df_loc_in_window(df,vx=np.arange(-75,75),vy=np.arange(-30,30),window='10min'):
+    resampled = df.resample(df,window)
     all_hist_matrix = []
     time_edges = []
     for time, group in resampled:
@@ -89,7 +89,7 @@ def resample_hists(df,vx=np.arange(-75,75),vy=np.arange(-30,30),window='10min'):
     for _, group in resampled:
         H, _ , _ = np.histogram2d(group['X1 (mm)'],group['Y1 (mm)'],[vx,vy])  if not group.empty else (np.zeros((len(vx)-1, len(vy)-1)),0,0)
         ht.append(H)
-    return np.array(H)
+    return np.array(time_edges),np.array(H)
 
 
 
