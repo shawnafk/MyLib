@@ -80,7 +80,7 @@ def df_resample(df, window='1min'):
 #resample hists location in windows
 #level2 df
 def hists_df_loc_in_window(df,vx=np.arange(-75,75),vy=np.arange(-30,30),window='10min'):
-    resampled = df.resample(df,window)
+    resampled = df_resample(df,window)
     all_hist_matrix = []
     time_edges = []
     for time, group in resampled:
