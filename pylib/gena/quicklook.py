@@ -515,7 +515,7 @@ def cartoon2d_start(xyextent,datetimes,array,*args,**kwargs):
 	im = ax.imshow(array[0,...],aspect='auto',extent=xyextent,*args,**kwargs)
 	cbar = fig.colorbar(im)
 	def animate(i):
-		Z=array[:,:,i]
+		Z=array[i,:,:]
 		im.set_array(Z)
 		im_min, im_max = np.min(Z), np.max(Z)
 		im.set_clim(im_min, im_max)
