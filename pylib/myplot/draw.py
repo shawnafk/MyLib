@@ -85,11 +85,11 @@ def cartoon1d_dyn(x,yt_s,*args,**kwargs):
     anim = animation.FuncAnimation(fig, animate, *args,**kwargs)
     return anim
 
-def cartoon2d_dyn(xyextent,array,*args,**kwargs):
+def cartoon2d(xyextent,array,*args,**kwargs):
 	fig=plt.figure()
 	ax=plt.axes()
 	time = ax.annotate(0,xy=(0.2, 0.9),xycoords='figure fraction')
-	im = ax.imshow(array[...,0],aspect='auto',extent=xyextent,cmap='jet',interpolation='lanczos')
+	im = ax.imshow(array[...,0],aspect='auto',extent=xyextent,*args,**kwargs)
 	cbar = fig.colorbar(im)
 	def animate(i):
 		Z=array[:,:,i]

@@ -72,11 +72,13 @@ def show_channel_bar(df, channel, cnl, folder):
 #only Date and ns col is enough
 #construct it first
 #return time_edges,window_histed
+
+def df_resample(df, window='1min'):
+    resampled = df.set_index('Date', drop=False).resample(window)
+    return resampled
+
 def hist_df_ns_in_window(df,value_bins= np.arange(0, 1400, 2),window='1min'):
-    df['t_idx'] = df['Date']
-    df.set_index('t_idx', inplace=True)
-    resampled = df.resample(window)
-    
+    reampled = df_resample(df,window)
     time_edges = []
     for time, _ in resampled:
         time_edges.append(time)
