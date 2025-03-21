@@ -84,11 +84,12 @@ def hists_df_loc_in_window(df,vx=np.arange(-75,75),vy=np.arange(-30,30),window='
     all_hist_matrix = []
     time_edges = []
     for time, group in resampled:
-        time_edges.append(time)
-    ht=[]
-    for _, group in resampled:
-        H, _ , _ = np.histogram2d(group['X1 (mm)'],group['Y1 (mm)'],[vx,vy])  if not group.empty else (np.zeros((len(vx)-1, len(vy)-1)),0,0)
-        ht.append(H)
+        if not group.empty:
+            H, _ , _ = np.histogram2d(group['X1 (mm)'],group['Y1 (mm)'],[vx,vy])   
+            ht.append(H)
+            time_edges.append(time)
+        else:
+            continue
     return np.array(time_edges),np.array(ht)
 
 
