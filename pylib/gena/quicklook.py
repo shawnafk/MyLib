@@ -77,6 +77,22 @@ def df_resample(df, window='1min'):
     resampled = df.set_index('Date', drop=False).resample(window)
     return resampled
 
+#resample hists location in windows
+#level2 df
+def resample_hists(df,vx=np.arange(-75,75),vy=np.arange(-30,30),window='10min'):
+    resampled = df.resample(window)
+    all_hist_matrix = []
+    time_edges = []
+    for time, group in resampled:
+        time_edges.append(time)
+    ht=[]
+    for _, group in resampled:
+        H, _ , _ = np.histogram2d(group['X1 (mm)'],group['Y1 (mm)'],[vx,vy])  if not group.empty else (np.zeros((len(vx)-1, len(vy)-1)),0,0)
+        ht.append(H)
+    return np.array(H)
+
+
+
 def hist_df_ns_in_window(df,value_bins= np.arange(0, 1400, 2),window='1min'):
     reampled = df_resample(df,window)
     time_edges = []
@@ -489,6 +505,23 @@ def show_angle_level2(df,dx=2.5):
     aux.draw_rectangle(ax,120,60)
     return f,ax
 
+#cartoon
+
+from matplotlib import animation
+def cartoon2d_start(xyextent,time,array,*args,**kwargs):
+	fig=plt.figure()
+	ax=plt.axes()
+	time = ax.annotate(0,xy=(0.2, 0.9),xycoords='figure fraction')
+	im = ax.imshow(array[0,...],aspect='auto',extent=xyextent,*args,**kwargs)
+	cbar = fig.colorbar(im)
+	def animate(i):
+		Z=array[:,:,i]
+		im.set_array(Z)
+		im_min, im_max = np.min(Z), np.max(Z)
+		im.set_clim(im_min, im_max)
+		time.set_text(time[i])
+	anim = animation.FuncAnimation(fig, animate, *args,**kwargs)
+	return anim
 
 if __name__ == '__main__':
     pass
