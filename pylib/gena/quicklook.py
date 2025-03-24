@@ -525,6 +525,7 @@ def cartoon2d_start(xyextent,datetimes,array,*args,**kwargs):
         im_min, im_max = np.min(Z), np.max(Z)
         im.set_clim(im_min, im_max)
         time.set_text(datetimes[i])
+    #frames = ?
     anim = animation.FuncAnimation(fig, animate, *args,**kwargs)
     return anim
 
