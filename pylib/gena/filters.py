@@ -9,6 +9,9 @@ def select_data(df,cond):
     len_sub = len(sub_df)
     return len_sub, sub_df
 
+
+#bad condition
+
 #condition
 def count_eff(df): 
     sum = np.array((df['X1_start (ns)'] + df['X2_start (ns)'] + df['Y1_start (ns)'] + df['Y2_start (ns)'] + df['X1_end (ns)'] + df['X2_end (ns)'] + df['Y1_end (ns)'] + df['Y2_end (ns)']))
